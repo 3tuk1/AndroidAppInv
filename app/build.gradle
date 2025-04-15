@@ -1,0 +1,62 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.inv.inventryapp'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.inv.inventryapp"
+        minSdk 29
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true // 追加：大きなアプリ用
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.work:work-runtime:2.8.1'
+    implementation 'androidx.room:room-runtime:2.6.1'
+    annotationProcessor 'androidx.room:room-compiler:2.6.1'
+
+    // 以下のFirebase関連の依存関係をすべて削除
+    // implementation platform('com.google.firebase:firebase-bom:32.7.2')
+    // implementation 'com.google.firebase:firebase-analytics'
+    // implementation 'com.google.firebase:firebase-firestore'
+    // implementation 'com.google.firebase:firebase-auth'
+    // implementation 'com.google.firebase:firebase-storage'
+
+    // バーコードスキャナー
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+
+    // マルチDEX対応
+    implementation 'androidx.multidex:multidex:2.0.1'
+
+    // テスト関連
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    def room_version = "2.6.1"  // 最新バージョンを使用
+
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+
+}
