@@ -1,0 +1,59 @@
+@startuml
+package "個人用在庫管理APP" {
+    class MainActivity {
+        +onCreate()
+    }
+
+    class CameraActivity {
+        +openCamera()
+        +captureImage()
+    }
+
+    class BarcodeScanner {
+        +scanBarcode()
+        +getBarcodeData()
+    }
+
+    class ExpiryDateManager {
+        +checkExpiryDate()
+        +notifyUser()
+    }
+
+    class FoodItem {
+        -name: String
+        -barcode: String
+        -expiryDate: Date
+        -quantity: int
+        +save()
+        +update()
+        +delete()
+    }
+
+    class RoomDatabase {
+        +insertFoodItem(foodItem: FoodItem)
+        +updateFoodItem(foodItem: FoodItem)
+        +deleteFoodItem(foodItem: FoodItem)
+        +getAllFoodItems(): List<FoodItem>
+    }
+
+    class InventoryManager {
+        +addItem(foodItem: FoodItem)
+        +removeItem(foodItem: FoodItem)
+        +updateItemQuantity(foodItem: FoodItem, quantity: int)
+        +getInventory(): List<FoodItem>
+    }
+
+    class JanCodeAPI {
+        +searchProduct(janCode: String): String
+    }
+
+    MainActivity --> CameraActivity : uses
+    MainActivity --> BarcodeScanner : uses
+    MainActivity --> ExpiryDateManager : uses
+    MainActivity --> RoomDatabase : uses
+    MainActivity --> InventoryManager : uses
+    MainActivity --> JanCodeAPI : uses
+    RoomDatabase --> FoodItem : manages
+    InventoryManager --> FoodItem : manages
+}
+@enduml
