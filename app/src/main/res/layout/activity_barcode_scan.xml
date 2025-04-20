@@ -2,7 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:background="@color/background_dark">
 
     <TextView
             android:id="@+id/scanning_text"
@@ -10,6 +11,7 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:text="バーコードをスキャンしています..."
+            android:textColor="@android:color/white"
             android:textSize="18sp" />
 
     <ProgressBar

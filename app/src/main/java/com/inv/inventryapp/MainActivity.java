@@ -14,6 +14,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.inv.inventryapp.R;
+import com.inv.inventryapp.fragments.InventoryFragment;
 
 // MainActivity.java
 public class MainActivity extends AppCompatActivity {
@@ -49,24 +50,28 @@ public class MainActivity extends AppCompatActivity {
             int itemId = item.getItemId();
 
             if (itemId == R.id.navigation_inventory) {
-                // 在庫一覧表示
-                // loadFragment(new InventoryFragment());
-                return true;
-            } else if (itemId == R.id.navigation_settings) {
-                // 設定画面表示
-                // loadFragment(new SettingsFragment());
+                loadFragment(new InventoryFragment());
                 return true;
             }
+            // 必要に応じて他のタブの処理を追加
 
             return false;
         });
-        // メニューボタンのクリックリスナー
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) ImageButton menuButton = findViewById(R.id.menu_button);
+
+        if (savedInstanceState == null) {
+            loadFragment(new InventoryFragment());
+            bottomNav.setSelectedItemId(R.id.navigation_inventory);
+        }
+
+        // MainActivity内で
+        ImageButton menuButton = findViewById(R.id.menu_button);
         menuButton.setOnClickListener(v -> {
-            showPopupMenu(v);
+            com.inv.inventryapp.GUI.menuButton popupHelper = new com.inv.inventryapp.GUI.menuButton(this);
+            popupHelper.showPopupMenu(v);
         });
 
-// デフォルトタブ選択
+
+        // デフォルトタブ選択
         bottomNav.setSelectedItemId(R.id.navigation_inventory);
     }
 
@@ -77,29 +82,6 @@ public class MainActivity extends AppCompatActivity {
                 .replace(R.id.fragment_container, fragment)
                 .commit();
     }
-    private void showPopupMenu(View view) {
-        PopupMenu popup = new PopupMenu(new ContextThemeWrapper(this, R.style.AppTheme_PopupOverlay), view);
-        popup.getMenuInflater().inflate(R.menu.main_menu, popup.getMenu());
 
 
-        popup.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-            if (itemId == R.id.action_settings) {
-                // 設定画面を開く
-                // startActivity(new Intent(this, SettingsActivity.class));
-                return true;
-            } else if (itemId == R.id.action_about) {
-                // アプリ情報ダイアログを表示
-                // showAboutDialog();
-                return true;
-            } else if (itemId == R.id.action_logout) {
-                // ログアウト処理
-                // performLogout();
-                return true;
-            }
-            return false;
-        });
-
-        popup.show();
-    }
 }
