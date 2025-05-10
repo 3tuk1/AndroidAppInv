@@ -24,9 +24,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".AddFoodActivity" />
-        <activity android:name=".BarcodeScanActivity" />
-        <activity android:name=".FoodDetailActivity" />
+        <activity android:name=".GUI.InvHome" />
     </application>
 
 </manifest>

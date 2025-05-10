@@ -10,7 +10,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.inv.inventryapp.R;
 import com.inv.inventryapp.models.FoodItem;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -40,7 +42,22 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
     public void onBindViewHolder(@NonNull FoodItemViewHolder holder, int position) {
         FoodItem item = foodItems.get(position);
         holder.nameTextView.setText(item.getName());
-        holder.expiryDateTextView.setText("賞味期限: " + dateFormat.format(item.getExpiryDate()));
+        // 画像を表示する場合
+        if (item.getImage() != null) {
+            holder.foodImageView.setImageBitmap(item.getImage());
+        } else {
+            holder.foodImageView.setImageResource(R.drawable.default_food_image); // デフォルト画像
+        }
+        // 賞味期限をフォーマット
+        try {
+            // String を Date に変換
+            Date expiryDate = dateFormat.parse(item.getExpiryDate());
+            String formattedDate = DateFormat.getDateInstance().format(expiryDate);
+            holder.expiryDateTextView.setText("賞味期限: " + formattedDate);
+        } catch (Exception e) {
+            // 変換に失敗した場合
+            holder.expiryDateTextView.setText("賞味期限: 不明");
+        }
         holder.quantityTextView.setText("数量: " + item.getQuantity());
         // カテゴリも表示する場合
         // holder.categoryTextView.setText("カテゴリ: " + item.getCategory());

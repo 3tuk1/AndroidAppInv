@@ -5,6 +5,7 @@ import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.PopupMenu;
 import com.inv.inventryapp.R;
+import com.inv.inventryapp.fragments.InventoryFragment;
 
 public class menuButton {
     private Context context;
@@ -24,11 +25,11 @@ public class menuButton {
             if (itemId == R.id.action_settings) {
                 // 設定画面を開く
                 return true;
-            } else if (itemId == R.id.action_about) {
-                // アプリ情報ダイアログを表示
+            } else if(itemId == R.id.action_update){
+                InventoryFragment fragment = new InventoryFragment();
+                fragment.load
                 return true;
-            } else if (itemId == R.id.action_logout) {
-                // ログアウト処理
+            }else if(itemId == R.id.action_delete_all){
                 return true;
             }
             return false;
