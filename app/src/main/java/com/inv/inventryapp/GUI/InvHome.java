@@ -10,15 +10,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.inv.inventryapp.R;
 import com.inv.inventryapp.fragments.InventoryFragment;
 
-public class InvHome extends AppCompatActivity {
+public class InvHome extends commonActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // 前にsavedInstanceStateがnullでない場合は、前の状態を復元する
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-        FloatingActionButton scanButton = findViewById(R.id.scan_button);
         // ツールバーの設定
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -35,32 +33,7 @@ public class InvHome extends AppCompatActivity {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-
-
-        // FABのクリックリスナー
-        scanButton.setOnClickListener(v -> {
-            // カメラ/スキャン画面を開く
-            // Intent intent = new Intent(MainActivity.this, BarcodeScannerActivity.class);
-            // startActivity(intent);
-        });
-
-        // タブ選択リスナー
-        bottomNav.setOnItemSelectedListener(item -> {
-            int itemId = item.getItemId();
-
-            if (itemId == R.id.navigation_inventory) {
-                loadFragment(new InventoryFragment());
-                return true;
-            }
-            // 必要に応じて他のタブの処理を追加
-
-            return false;
-        });
-
-        if (savedInstanceState == null) {
-            loadFragment(new InventoryFragment());
-            bottomNav.setSelectedItemId(R.id.navigation_inventory);
-        }
+        initCommonActivity(savedInstanceState);
 
         // MainActivity内で
         ImageButton menuButton = findViewById(R.id.menu_button);
@@ -68,17 +41,5 @@ public class InvHome extends AppCompatActivity {
             com.inv.inventryapp.GUI.menuButton popupHelper = new com.inv.inventryapp.GUI.menuButton(this);
             popupHelper.showPopupMenu(v);
         });
-
-
-        // デフォルトタブ選択
-        bottomNav.setSelectedItemId(R.id.navigation_inventory);
-
-    }
-
-    private void loadFragment(InventoryFragment inventoryFragment) {
-        // フラグメントのトランザクションを開始
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragment_container, inventoryFragment)
-                .commit();
     }
 }

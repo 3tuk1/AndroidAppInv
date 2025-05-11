@@ -3,6 +3,7 @@ package com.inv.inventryapp.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -20,7 +21,9 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
 
     private List<FoodItem> foodItems;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.JAPAN);
+    private AdapterView.OnItemClickListener onItemClickListener;
 
+    private long itemId = 0;
     public FoodItemAdapter(List<FoodItem> foodItems) {
         this.foodItems = foodItems;
     }
@@ -61,12 +64,22 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
         holder.quantityTextView.setText("数量: " + item.getQuantity());
         // カテゴリも表示する場合
         // holder.categoryTextView.setText("カテゴリ: " + item.getCategory());
+        holder.itemView.setOnClickListener(v -> {
+            if (onItemClickListener != null) {
+                onItemClickListener.onItemClick(null, v, position, itemId);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return foodItems.size();
     }
+
+    public void setOnItemClickListener(AdapterView.OnItemClickListener listener) {
+        this.onItemClickListener = listener;
+    }
+
 
     static class FoodItemViewHolder extends RecyclerView.ViewHolder {
         ImageView foodImageView;

@@ -27,7 +27,7 @@ public class menuButton {
                 return true;
             } else if(itemId == R.id.action_update){
                 InventoryFragment fragment = new InventoryFragment();
-                fragment.load
+                fragment.loadFoodItems();
                 return true;
             }else if(itemId == R.id.action_delete_all){
                 return true;

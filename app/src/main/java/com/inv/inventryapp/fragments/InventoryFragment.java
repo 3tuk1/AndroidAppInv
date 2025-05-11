@@ -49,6 +49,17 @@ public class InventoryFragment extends Fragment {
         foodItemDao = AppDatabase.getInstance(requireContext()).foodItemDao();
 
         init();
+
+        // アイテムをタップした時の処理
+        // InventoryFragment.java の、アダプターのクリックリスナー設定例
+        adapter.setOnItemClickListener((parent, itemView, position, id) -> {
+            FoodItemFragment fragment = new FoodItemFragment();
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
         return view;
     }
 
@@ -70,7 +81,7 @@ public class InventoryFragment extends Fragment {
         });
     }
 
-    private void loadFoodItems() {
+    public void loadFoodItems() {
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 allFoodItems = foodItemDao.getAllFoodItems();
@@ -78,49 +89,5 @@ public class InventoryFragment extends Fragment {
                 adapter.updateItems(filteredFoodItems);
             });
         }
-    }
-
-    public void filterByCategory(String category) {
-        if (category == null || category.isEmpty() || category.equals("すべて")) {
-            filteredFoodItems = new ArrayList<>(allFoodItems);
-        } else {
-            filteredFoodItems = allFoodItems.stream()
-                    .filter(item -> category.equals(item.getCategory()))
-                    .collect(Collectors.toList());
-        }
-
-        adapter.updateItems(filteredFoodItems);
-    }
-
-    public void sortItems(String sortBy) {
-        switch (sortBy) {
-            case "名前":
-                Collections.sort(filteredFoodItems, Comparator.comparing(FoodItem::getName));
-                break;
-            case "賞味期限":
-                Collections.sort(filteredFoodItems, Comparator.comparing(FoodItem::getExpiryDate));
-                break;
-            case "数量":
-                Collections.sort(filteredFoodItems, Comparator.comparing(FoodItem::getQuantity));
-                break;
-        }
-
-        adapter.notifyDataSetChanged();
-    }
-
-    private void DemoData() {
-        FoodItem foodItem1 = new FoodItem("りんご", "1234567890123", "2024/12/31", 5, "果物");
-        FoodItem foodItem2 = new FoodItem("牛乳", "1234567890124", "2024/11/30", 2, "乳製品");
-        FoodItem foodItem3 = new FoodItem("パン", "1234567890125", "2024/10/15", 10, "穀物");
-        FoodItem foodItem4 = new FoodItem("卵", "1234567890126", "2024/09/20", 12, "卵");
-        FoodItem foodItem5 = new FoodItem("チーズ", "1234567890127", "2024/08/25", 8, "乳製品");
-
-        executor .execute(() -> {
-            foodItemDao.insert(foodItem1);
-            foodItemDao.insert(foodItem2);
-            foodItemDao.insert(foodItem3);
-            foodItemDao.insert(foodItem4);
-            foodItemDao.insert(foodItem5);
-        });
     }
 }
