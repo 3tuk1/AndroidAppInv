@@ -9,6 +9,16 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+    <ImageButton
+            android:id="@+id/back_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_backcamera_foreground"
+            android:contentDescription="@string/back_button_description"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_margin="16dp" />
     <TextView
             android:id="@+id/barcode_result"
             android:layout_width="match_parent"

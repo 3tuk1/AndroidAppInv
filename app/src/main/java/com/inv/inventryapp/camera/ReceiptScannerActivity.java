@@ -27,14 +27,23 @@ public class ReceiptScannerActivity extends BaseCameraActivity {
     private Button captureButton;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void setupCamera() {
+        // ボタンの設定やUI要素の初期化など
+// カメラ関連の処理は BaseCameraActivity の startCamera() と processImage() に任せる
         resultTextView = findViewById(R.id.receipt_text);
-        captureButton = findViewById(R.id.capture_button);
+        android.widget.ImageButton captureButton = findViewById(R.id.capture_button);
 
         recognizer = TextRecognition.getClient(new JapaneseTextRecognizerOptions.Builder().build());
 
         captureButton.setOnClickListener(v -> captureReceipt());
+// 戻るボタンの設定
+        setupBackButton(R.id.back_button);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
     }
 
     @Override

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">在庫管理アプリ</string>
+    <string name="back_button_description">戻る</string>
+    <string name="capture_button_description">写真を撮る</string>
 </resources>

@@ -25,10 +25,19 @@ public class ExpiryDateScannerActivity extends BaseCameraActivity {
     private TextRecognizer recognizer;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void setupCamera() {
+        // ボタンの設定やUI要素の初期化など
+        // カメラ関連の処理は BaseCameraActivity の startCamera() と processImage() に任せる
         dateResultView = findViewById(R.id.date_result);
         recognizer = TextRecognition.getClient(new JapaneseTextRecognizerOptions.Builder().build());
+        // 戻るボタンの設定
+        setupBackButton(R.id.back_button);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
     }
 
     @Override

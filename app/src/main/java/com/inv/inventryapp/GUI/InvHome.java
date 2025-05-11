@@ -16,6 +16,7 @@ public class InvHome extends commonActivity {
         // 前にsavedInstanceStateがnullでない場合は、前の状態を復元する
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        FloatingActionButton scanButton = findViewById(R.id.scan_button);
 
         // ツールバーの設定
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
@@ -40,6 +41,13 @@ public class InvHome extends commonActivity {
         menuButton.setOnClickListener(v -> {
             com.inv.inventryapp.GUI.menuButton popupHelper = new com.inv.inventryapp.GUI.menuButton(this);
             popupHelper.showPopupMenu(v);
+        });
+        // FABのクリックリスナー
+        scanButton.setOnClickListener(v -> {
+            // カメラ/スキャン画面を開く
+            // Intent intent = new Intent(MainActivity.this, BarcodeScannerActivity.class);
+            // startActivity(intent);
+            showCameraOptions();
         });
     }
 

@@ -12,6 +12,7 @@ import com.inv.inventryapp.camera.BarcodeScannerActivity;
 import com.inv.inventryapp.camera.BaseCameraActivity;
 import com.inv.inventryapp.camera.ExpiryDateScannerActivity;
 import com.inv.inventryapp.camera.ReceiptScannerActivity;
+import com.inv.inventryapp.fragments.FoodItemFragment;
 import com.inv.inventryapp.fragments.InventoryFragment;
 
 public class commonActivity extends AppCompatActivity {
@@ -20,17 +21,11 @@ public class commonActivity extends AppCompatActivity {
         // Initialize common components here
         // For example, set up toolbar, navigation drawer, etc.
         // デフォルトタブ選択
-        FloatingActionButton scanButton = findViewById(R.id.scan_button);
+
         if(savedInstanceState == null) {
             loadFragment(new InventoryFragment());
         }
-        // FABのクリックリスナー
-        scanButton.setOnClickListener(v -> {
-            // カメラ/スキャン画面を開く
-            // Intent intent = new Intent(MainActivity.this, BarcodeScannerActivity.class);
-            // startActivity(intent);
-            showCameraOptions();
-        });
+
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setSelectedItemId(R.id.navigation_inventory);
         // タブ選択リスナー
@@ -63,8 +58,8 @@ public class commonActivity extends AppCompatActivity {
                 .replace(R.id.fragment_container, inventoryFragment)
                 .commit();
     }
-    private void showCameraOptions() {
-        String[] options = {"バーコードスキャン", "レシート読み取り", "賞味期限スキャン"};
+    void showCameraOptions() {
+        String[] options = {"バーコードスキャン", "レシート読み取り", "賞味期限スキャン", "手動入力"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("カメラ機能を選択")
@@ -79,6 +74,13 @@ public class commonActivity extends AppCompatActivity {
                             break;
                         case 2: // 賞味期限スキャン
                             intent = new Intent(this, ExpiryDateScannerActivity.class);
+                            break;
+                        case 3: // 手動入力
+                            FoodItemFragment fragment = new FoodItemFragment();
+                            getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.fragment_container, fragment)
+                                    .addToBackStack(null)
+                                    .commit();
                             break;
                     }
                     if (intent != null) {

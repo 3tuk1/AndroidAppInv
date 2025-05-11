@@ -1,6 +1,7 @@
 package com.inv.inventryapp.fragments;
 
 import android.app.Activity;
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -24,6 +25,7 @@ import com.inv.inventryapp.room.AppDatabase;
 import com.inv.inventryapp.room.FoodItemDao;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -36,6 +38,8 @@ public class FoodItemFragment extends Fragment {
     private EditText quantityEditText;
     private Spinner categorySpinner;
     private EditText expiryEditText;
+
+    private String barcode; // バーコードの変数を追加
 
     private ActivityResultLauncher<Intent> cameraLauncher;
 
@@ -124,6 +128,20 @@ public class FoodItemFragment extends Fragment {
                 });
             }
         }
+        // 日付の設定
+        expiryEditText.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+            DatePickerDialog datePickerDialog = new DatePickerDialog(requireContext(),
+                    (view1, selectedYear, selectedMonth, selectedDay) -> {
+                        String selectedDate = selectedYear + "/" + (selectedMonth + 1) + "/" + selectedDay;
+                        expiryEditText.setText(selectedDate);
+                    },
+                    year, month, day); // デフォルトの日付を現在の日付に設定
+            datePickerDialog.show();
+        });
         // 保存ボタンの設定
         Button saveButton = view.findViewById(R.id.saveButton);
         saveButton.setOnClickListener(v -> {
@@ -144,22 +162,49 @@ public class FoodItemFragment extends Fragment {
             } else {
                 foodItem.setImage(null); // デフォルト画像を使用する場合
             }
+            // 食品のバーコードを取得（必要に応じて）
+            if(barcode == null) {
+                barcode = String.valueOf(foodItem.getId()); // デフォルト値を設定
+            }
+            foodItem.setBarcode(barcode);
 
             // DBに保存
             executor.execute(() -> {
-                if (getArguments() != null) {
-                    long itemId = getArguments().getLong("foodItemId", -1);
-                    if (itemId != -1) {
-                        foodItem.setId((int) itemId);
-                        foodItemDao.update(foodItem);
+                try {
+                    // バリデーション
+                    if (name.isEmpty() || quantity <= 0 || expiryDate.isEmpty()) {
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "すべての必須項目を入力してください", Toast.LENGTH_SHORT).show();
+                        });
+                        return;
+                    }
+
+                    // 更新または新規作成の処理
+                    if (getArguments() != null) {
+                        long itemId = getArguments().getLong("foodItemId", -1);
+                        if (itemId != -1) {
+                            // 更新の場合
+                            foodItem.setId((int) itemId);
+                            foodItemDao.update(foodItem);
+                        } else {
+                            // 新規作成の場合
+                            foodItemDao.insert(foodItem);
+                        }
                     } else {
+                        // 引数がnullの場合は新規作成
                         foodItemDao.insert(foodItem);
                     }
+
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "保存しました", Toast.LENGTH_SHORT).show();
+                        requireActivity().getSupportFragmentManager().popBackStack();
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "保存に失敗しました: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
                 }
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(getContext(), "保存しました", Toast.LENGTH_SHORT).show();
-                    requireActivity().getSupportFragmentManager().popBackStack();
-                });
             });
         });
 

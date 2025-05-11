@@ -9,16 +9,28 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-    <Button
+    <ImageButton
             android:id="@+id/capture_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_camera_foreground"
+            android:contentDescription="@string/capture_button_description"
             android:layout_marginBottom="32dp"
-            android:text="写真を撮影"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
+    <ImageButton
+            android:id="@+id/back_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_backcamera_foreground"
+            android:contentDescription="@string/back_button_description"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_margin="16dp" />
     <TextView
             android:id="@+id/receipt_text"
             android:layout_width="match_parent"

@@ -2,7 +2,10 @@ package com.inv.inventryapp.camera;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -34,8 +37,15 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
         setContentView(getLayoutResource());
 
         previewView = findViewById(R.id.viewFinder);
-
+        // アクションバーに戻るボタンを表示
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
         // カメラパーミッションのチェック
+        if (!checkPermissions()) {
+            return;
+        }
         if (allPermissionsGranted()) {
             startCamera();
         } else {
@@ -43,6 +53,7 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor();
+        setupCamera();
     }
 
     protected abstract int getLayoutResource();
@@ -106,10 +117,63 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
             }
         }
     }
+    private static final int PERMISSION_REQUEST_CODE = 200;
+
+    private boolean checkPermissions() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            // Android 9以前
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                Manifest.permission.CAMERA},
+                        PERMISSION_REQUEST_CODE);
+                return false;
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13以降
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_MEDIA_IMAGES,
+                                Manifest.permission.CAMERA},
+                        PERMISSION_REQUEST_CODE);
+                return false;
+            }
+        }
+
+        // カメラ権限チェック
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CAMERA},
+                    PERMISSION_REQUEST_CODE);
+            return false;
+        }
+
+        return true;
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         cameraExecutor.shutdown();
     }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // 戻るボタンが押されたときの処理
+        if (item.getItemId() == android.R.id.home) {
+            finish(); // アクティビティを終了して前の画面に戻る
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    // 子クラスで実装する抽象メソッド
+    protected void setupBackButton(int buttonId) {
+        // Buttonへのキャストをやめて、Viewとして扱う
+        View backButton = findViewById(buttonId);
+        backButton.setOnClickListener(v -> finish());
+    }
+    protected abstract void setupCamera();
 }
