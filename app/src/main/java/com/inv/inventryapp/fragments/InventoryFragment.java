@@ -53,7 +53,13 @@ public class InventoryFragment extends Fragment {
         // アイテムをタップした時の処理
         // InventoryFragment.java の、アダプターのクリックリスナー設定例
         adapter.setOnItemClickListener((parent, itemView, position, id) -> {
+            FoodItem selectedItem = filteredFoodItems.get(position);
             FoodItemFragment fragment = new FoodItemFragment();
+
+            Bundle bundle = new Bundle();
+            bundle.putLong("foodItemId", selectedItem.getId());
+            fragment.setArguments(bundle);
+
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, fragment)
