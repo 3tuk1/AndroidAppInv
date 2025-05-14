@@ -7,6 +7,9 @@ import androidx.room.TypeConverter;
 import java.io.ByteArrayOutputStream;
 
 public class Converters {
+    ///
+    /// とった画像はbyte
+    // Bitmap を byte[] に変換するメソッド
     @TypeConverter
     public static byte[] fromBitmap(Bitmap bitmap) {
         if (bitmap == null) return null;
@@ -26,6 +29,7 @@ public class Converters {
         return outputStream.toByteArray();
     }
 
+    // byte[] を Bitmap に変換するメソッド
     @TypeConverter
     public static Bitmap toBitmap(byte[] byteArray) {
         if (byteArray == null) return null;
@@ -34,6 +38,7 @@ public class Converters {
         return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
     }
 
+    // ビットマップを圧縮するメソッド
     private static Bitmap compressImage(Bitmap original) {
         if (original == null) return null;
 
