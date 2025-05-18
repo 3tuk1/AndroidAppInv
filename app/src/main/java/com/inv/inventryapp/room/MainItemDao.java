@@ -1,16 +1,15 @@
 package com.inv.inventryapp.room;
 
-import androidx.room.Delete;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
+import androidx.room.*;
 import com.inv.inventryapp.models.MainItem;
+import com.inv.inventryapp.models.MainItemJoin;
 
 import java.util.List;
 
+@Dao
 public interface MainItemDao {
      @Insert
-     void insert(MainItem mainItem);
+     long insert(MainItem mainItem);
 
      @Update
      void update(MainItem mainItem);
@@ -23,4 +22,8 @@ public interface MainItemDao {
 
      @Query("SELECT * FROM main_items WHERE id = :id")
      MainItem getMainItemById(int id);
+
+     @Transaction
+     @Query("SELECT * FROM main_items")
+     List<MainItemJoin> getMainItemWithImagesAndLocation();
 }

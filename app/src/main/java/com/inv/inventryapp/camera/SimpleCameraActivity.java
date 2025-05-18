@@ -6,15 +6,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
-// Buttonをインポートしている行を削除または変更
-import android.widget.ImageButton;  // 追加
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.core.content.ContextCompat;
-
 import androidx.core.content.FileProvider;
 import com.inv.inventryapp.R;
 
@@ -27,6 +25,7 @@ public class SimpleCameraActivity extends BaseCameraActivity {
 
     private ImageButton captureButton;
     private static final String TAG = "SimpleCameraActivity";
+    private static final String KEY_PHOTO_PATH = "photo_path"; // 実際のファイルパスのキー
 
     @Override
     protected int getLayoutResource() {
@@ -41,7 +40,6 @@ public class SimpleCameraActivity extends BaseCameraActivity {
 
     @Override
     protected void setupCamera() {
-        // ImageButtonとして正しく取得
         captureButton = findViewById(R.id.capture_button);
         if (captureButton != null) {
             captureButton.setOnClickListener(v -> capturePhoto());
@@ -65,7 +63,7 @@ public class SimpleCameraActivity extends BaseCameraActivity {
             return;
         }
 
-        // アプリ専用ディレクトリに画像を保存する方法に変更
+        // アプリ専用ディレクトリに画像を保存
         File photoDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Camera");
         if (!photoDir.exists()) {
             photoDir.mkdirs();
@@ -87,15 +85,23 @@ public class SimpleCameraActivity extends BaseCameraActivity {
                     @Override
                     public void onImageSaved(@NonNull ImageCapture.OutputFileResults results) {
                         Log.d(TAG, "写真保存成功: " + photoFile.getAbsolutePath());
+
                         // FileProviderを使用してUriを生成
                         Uri photoUri = FileProvider.getUriForFile(
                                 SimpleCameraActivity.this,
                                 getApplicationContext().getPackageName() + ".fileprovider",
                                 photoFile);
 
+                        // 結果インテントに実際のファイルパスとURIの両方を含める
                         Intent resultIntent = new Intent();
                         resultIntent.putExtra("photo_uri", photoUri.toString());
+                        resultIntent.putExtra(KEY_PHOTO_PATH, photoFile.getAbsolutePath());
                         setResult(RESULT_OK, resultIntent);
+
+                        // 成功メッセージを表示
+                        Toast.makeText(SimpleCameraActivity.this,
+                                "写真を保存しました", Toast.LENGTH_SHORT).show();
+
                         finish();
                     }
 

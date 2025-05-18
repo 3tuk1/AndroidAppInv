@@ -2,35 +2,17 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "2f89e66aa3212b1ed2194ddd73c9aa7a",
+    "identityHash": "b17fb32c5fef50433ece26380e0e67c4",
     "entities": [
       {
-        "tableName": "food_items",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT, `barcode` TEXT, `expiryDate` TEXT, `quantity` INTEGER NOT NULL, `category` TEXT, `image` BLOB)",
+        "tableName": "main_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `quantity` INTEGER NOT NULL, `category` TEXT, `name` TEXT, `expiration_date` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "name",
-            "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "barcode",
-            "columnName": "barcode",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "expiryDate",
-            "columnName": "expiryDate",
-            "affinity": "TEXT",
-            "notNull": false
           },
           {
             "fieldPath": "quantity",
@@ -45,9 +27,15 @@
             "notNull": false
           },
           {
-            "fieldPath": "image",
-            "columnName": "image",
-            "affinity": "BLOB",
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "expirationDate",
+            "columnName": "expiration_date",
+            "affinity": "TEXT",
             "notNull": false
           }
         ],
@@ -59,12 +47,106 @@
         },
         "indices": [],
         "foreignKeys": []
+      },
+      {
+        "tableName": "item_images",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `item_id` INTEGER NOT NULL, `image_path` TEXT, `timestamp` INTEGER NOT NULL, FOREIGN KEY(`item_id`) REFERENCES `main_items`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemId",
+            "columnName": "item_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imagePath",
+            "columnName": "image_path",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "main_items",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "item_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`history_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `type` TEXT, `date` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "historyId",
+            "columnName": "history_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemId",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantity",
+            "columnName": "quantity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "history_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2f89e66aa3212b1ed2194ddd73c9aa7a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b17fb32c5fef50433ece26380e0e67c4')"
     ]
   }
 }

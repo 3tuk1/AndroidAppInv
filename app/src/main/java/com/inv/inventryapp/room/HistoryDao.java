@@ -1,7 +1,9 @@
 package com.inv.inventryapp.room;
 
+import androidx.room.Dao;
 import com.inv.inventryapp.models.History;
 
+@Dao
 public interface HistoryDao {
     // Insert a new history record
     @androidx.room.Insert

@@ -2,12 +2,10 @@ package com.inv.inventryapp.camera;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.TextView;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
@@ -17,6 +15,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,19 +49,17 @@ public class ExpiryDateScannerActivity extends BaseCameraActivity {
         imageAnalysis.setAnalyzer(cameraExecutor, this::analyzeExpiryDate);
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
+    @SuppressLint({"UnsafeOptInUsageError", "SetTextI18n"})
     private void analyzeExpiryDate(ImageProxy imageProxy) {
         InputImage image = InputImage.fromMediaImage(
-                imageProxy.getImage(),
+                Objects.requireNonNull(imageProxy.getImage()),
                 imageProxy.getImageInfo().getRotationDegrees());
 
         recognizer.process(image)
                 .addOnSuccessListener(text -> {
                     String extractedDate = extractDateFromText(text.getText());
                     if (extractedDate != null) {
-                        runOnUiThread(() -> {
-                            dateResultView.setText("賞味/消費期限: " + extractedDate);
-                        });
+                        runOnUiThread(() -> dateResultView.setText("賞味/消費期限: " + extractedDate));
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -75,7 +72,7 @@ public class ExpiryDateScannerActivity extends BaseCameraActivity {
         // 日付を抽出するための正規表現パターン
         // 例: "賞味期限: 2023年12月31日" や "消費期限 23.12.31" など様々なフォーマットに対応
         Pattern datePattern = Pattern.compile(
-                "(消費期限|賞味期限|期限)[^\\d]*(\\d{2,4}[年/.\\s-]\\s*\\d{1,2}[月/.\\s-]\\s*\\d{1,2}[日]?|\\d{1,2}[/.\\s-]\\d{1,2}[/.\\s-]\\d{2,4})"
+                "(消費期限|賞味期限|期限)\\D*(\\d{2,4}[年/.\\s-]\\s*\\d{1,2}[月/.\\s-]\\s*\\d{1,2}日?|\\d{1,2}[/.\\s-]\\d{1,2}[/.\\s-]\\d{2,4})"
         );
 
         Matcher matcher = datePattern.matcher(text);

@@ -1,6 +1,5 @@
 package com.inv.inventryapp.camera;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -8,7 +7,6 @@ import androidx.annotation.NonNull;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.ImageProxy;
 import androidx.core.content.ContextCompat;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;

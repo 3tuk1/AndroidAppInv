@@ -10,22 +10,29 @@ import androidx.room.PrimaryKey;
         foreignKeys = @ForeignKey(
                 entity = MainItem.class,
                 parentColumns = "id",
-                childColumns = "id",
+                childColumns = "item_id",
                 onDelete = ForeignKey.CASCADE
         )
 )
 public class Location {
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     private int id;
+
+    @ColumnInfo(name = "item_id")
+    private int itemId;
 
     @ColumnInfo(name = "location")
     private String location;
 
+    @ColumnInfo(name = "timestamp")
+    private long timestamp;
+
     // コンストラクタ
-    public Location(int id, String location) {
-        this.id = id;
+    public Location(int itemId, String location) {
+        this.itemId = itemId;
         this.location = location;
+        this.timestamp = System.currentTimeMillis();
     }
 
     // ゲッター・セッター
@@ -34,4 +41,10 @@ public class Location {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public int getItemId() { return itemId; }
+    public void setItemId(int itemId) { this.itemId = itemId; }
+
+    public long getTimestamp() { return timestamp; }
+    public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 }

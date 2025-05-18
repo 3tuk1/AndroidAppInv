@@ -56,6 +56,16 @@
                 android:textColorHint="@color/blue"
                 android:focusable="false" />
 
+        <EditText
+                android:id="@+id/locationEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="保管場所"
+                android:textColor="@color/neon_green"
+                android:backgroundTint="@color/purple_700"
+                android:textColorHint="@color/blue"
+                android:inputType="numberDecimal" />
+
         <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

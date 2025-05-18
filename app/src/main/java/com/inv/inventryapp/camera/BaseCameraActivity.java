@@ -120,17 +120,7 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 200;
 
     private boolean checkPermissions() {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            // Android 9以前
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                Manifest.permission.CAMERA},
-                        PERMISSION_REQUEST_CODE);
-                return false;
-            }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             // Android 13以降
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
                     != PackageManager.PERMISSION_GRANTED) {

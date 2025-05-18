@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import com.inv.inventryapp.room.AppDatabase;
-import com.inv.inventryapp.room.FoodItemDao;
+
 
 // MainActivity.java
 public class MainActivity extends AppCompatActivity {

@@ -1,38 +1,50 @@
 package com.inv.inventryapp.models;
 
-import android.graphics.Bitmap;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
 @Entity(
-        tableName = "images",
+        tableName = "item_images",
         foreignKeys = @ForeignKey(
                 entity = MainItem.class,
                 parentColumns = "id",
-                childColumns = "id",
+                childColumns = "item_id",
                 onDelete = ForeignKey.CASCADE
         )
 )
 public class ItemImage {
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     private int id;
 
-    @ColumnInfo(name = "image")
-    private Bitmap image;
+    @ColumnInfo(name = "item_id")
+    private int itemId;
+
+    @ColumnInfo(name = "image_path")
+    private String imagePath;
+
+    @ColumnInfo(name = "timestamp")
+    private long timestamp;
 
     // コンストラクタ
-    public ItemImage(int id, Bitmap image) {
-        this.id = id;
-        this.image = image;
+    public ItemImage(int itemId, String imagePath) {
+        this.itemId = itemId;
+        this.imagePath = imagePath;
+        this.timestamp = System.currentTimeMillis();
     }
 
     // ゲッター・セッター
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
-    public Bitmap getImage() { return image; }
-    public void setImage(Bitmap image) { this.image = image; }
+    public int getItemId() { return itemId; }
+    public void setItemId(int itemId) { this.itemId = itemId; }
+
+    public String getImagePath() { return imagePath; }
+    public void setImagePath(String imagePath) { this.imagePath = imagePath; }
+
+    public long getTimestamp() { return timestamp; }
+    public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 }

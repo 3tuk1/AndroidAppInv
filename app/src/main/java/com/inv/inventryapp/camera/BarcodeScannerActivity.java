@@ -10,9 +10,6 @@ import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.common.InputImage;
 import com.inv.inventryapp.R;
-import com.inv.inventryapp.models.FoodItem;
-
-import java.util.List;
 
 public class BarcodeScannerActivity extends BaseCameraActivity {
     private TextView barcodeResultView;

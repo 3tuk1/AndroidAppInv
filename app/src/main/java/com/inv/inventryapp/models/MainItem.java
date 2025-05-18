@@ -10,15 +10,19 @@ public class MainItem {
     @ColumnInfo(name = "id")
     private int id;
 
+    // 商品の数量
     @ColumnInfo(name = "quantity")
     private int quantity;
 
+    // 商品のカテゴリ
     @ColumnInfo(name = "category")
     private String category;
 
+    // 商品の名前
     @ColumnInfo(name = "name")
     private String name;
 
+    // 商品の賞味期限
     @ColumnInfo(name = "expiration_date")
     private String expirationDate;
 

@@ -1,30 +1,41 @@
 package com.inv.inventryapp.room;
 
+import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-import android.content.Context;
-import androidx.room.TypeConverters;
-import com.inv.inventryapp.models.FoodItem;
+import com.inv.inventryapp.models.Barcode;
+import com.inv.inventryapp.models.ItemImage;
+import com.inv.inventryapp.models.Location;
+import com.inv.inventryapp.models.MainItem;
 
-@Database(entities = {FoodItem.class}, version = 1)
-@TypeConverters({Converters.class}) // コンバータを登録
+@Database(
+        entities = {
+                MainItem.class,
+                ItemImage.class,
+                Location.class,
+                Barcode.class  // バーコードエンティティを追加
+        },
+        version = 2,  // バージョンを上げる
+        exportSchema = false
+)
 public abstract class AppDatabase extends RoomDatabase {
-    public abstract FoodItemDao foodItemDao();
+    private static AppDatabase instance;
 
-    private static volatile AppDatabase INSTANCE;
+    public abstract MainItemDao mainItemDao();
+    public abstract ItemImageDao itemImageDao();
+    public abstract LocationDao locationDao();
+    public abstract BarcodeDao barcodeDao();  // バーコードDAOのメソッドを追加
 
-    public static AppDatabase getInstance(Context context) {
-        if (INSTANCE == null) {
-            synchronized (AppDatabase.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                                    AppDatabase.class, "app_database")
-                            .fallbackToDestructiveMigration()
-                            .build();
-                }
-            }
+    public static synchronized AppDatabase getInstance(Context context) {
+        if (instance == null) {
+            instance = Room.databaseBuilder(
+                            context.getApplicationContext(),
+                            AppDatabase.class,
+                            "inventory_database")
+                    .fallbackToDestructiveMigration()  // データベース構造変更時に再作成
+                    .build();
         }
-        return INSTANCE;
+        return instance;
     }
 }

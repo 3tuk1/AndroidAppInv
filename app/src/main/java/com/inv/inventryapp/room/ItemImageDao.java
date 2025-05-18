@@ -1,31 +1,43 @@
 package com.inv.inventryapp.room;
 
-import androidx.room.Delete;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
+import androidx.room.*;
+
 import com.inv.inventryapp.models.ItemImage;
+import com.inv.inventryapp.models.MainItemJoin;
 
 import java.util.List;
 
+@Dao
 public interface ItemImageDao {
-    // Insert a new item image
     @Insert
     void insert(ItemImage itemImage);
 
-    // Update an existing item image
     @Update
     void update(ItemImage itemImage);
 
-    // Delete an item image
     @Delete
     void delete(ItemImage itemImage);
 
-    // Get all item images
-    @Query("SELECT * FROM images")
-    List<ItemImage> getAllItemImages();
+    @Query("SELECT * FROM item_images WHERE item_id = :itemId")
+    List<ItemImage> getImagesForItem(int itemId);
 
-    // Get an item image by its ID
-    @Query("SELECT * FROM images WHERE id = :id")
-    ItemImage getItemImageById(int id);
+    @Query("SELECT * FROM item_images")
+    List<ItemImage> getAllImages();
+
+    // item_idが一致する画像を取得
+    @Query("SELECT * FROM item_images WHERE item_id = :itemId")
+    ItemImage getImageByItemId(int itemId);
+
+    // MainItemとitem_imageを結合するクエリ
+    @Transaction
+    @Query("SELECT m.*, i.* FROM main_items m LEFT JOIN item_images i ON m.id = i.item_id")
+    List<MainItemJoin> getItemsWithItemImages();
+
+    // 特定のアイテムとその場所情報を取得
+    @Transaction
+    @Query("SELECT m.*, i.* FROM main_items m LEFT JOIN item_images i ON m.id = i.item_id WHERE m.id = :itemId")
+    MainItemJoin getItemWithItemImageById(int itemId);
+
+
+
 }
