@@ -26,4 +26,8 @@ public interface MainItemDao {
      @Transaction
      @Query("SELECT * FROM main_items")
      List<MainItemJoin> getMainItemWithImagesAndLocation();
+
+     @Transaction
+     @Query("SELECT * FROM main_items WHERE id = :id")
+     MainItemJoin getMainItemWithImagesAndLocationById(int id);
 }

@@ -27,6 +27,8 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
 
     /**
      * FoodItemAdapterは、RecyclerViewのアダプタークラスで、食品アイテムのリストを表示します。
+     *
+     * このクラスは、RecyclerViewで表示を行うためにアイテムのリスト化を行う
      */
     private List<MainItemJoin> mainItemJoins;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.JAPAN);

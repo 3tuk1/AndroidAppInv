@@ -52,11 +52,12 @@ public class ExpiryDateScannerActivity extends BaseCameraActivity {
     @SuppressLint({"UnsafeOptInUsageError", "SetTextI18n"})
     private void analyzeExpiryDate(ImageProxy imageProxy) {
         InputImage image = InputImage.fromMediaImage(
-                Objects.requireNonNull(imageProxy.getImage()),
-                imageProxy.getImageInfo().getRotationDegrees());
+                Objects.requireNonNull(imageProxy.getImage()),// nullチェック
+                imageProxy.getImageInfo().getRotationDegrees());// 回転角度を取得
 
         recognizer.process(image)
-                .addOnSuccessListener(text -> {
+                .addOnSuccessListener(text -> { // テキストを取得
+                    // 取得したテキストが消費期限や賞味期限を含むか確認
                     String extractedDate = extractDateFromText(text.getText());
                     if (extractedDate != null) {
                         runOnUiThread(() -> dateResultView.setText("賞味/消費期限: " + extractedDate));
@@ -72,12 +73,24 @@ public class ExpiryDateScannerActivity extends BaseCameraActivity {
         // 日付を抽出するための正規表現パターン
         // 例: "賞味期限: 2023年12月31日" や "消費期限 23.12.31" など様々なフォーマットに対応
         Pattern datePattern = Pattern.compile(
-                "(消費期限|賞味期限|期限)\\D*(\\d{2,4}[年/.\\s-]\\s*\\d{1,2}[月/.\\s-]\\s*\\d{1,2}日?|\\d{1,2}[/.\\s-]\\d{1,2}[/.\\s-]\\d{2,4})"
+                "(消費期限|賞味期限|期限)\\D*" +
+                        "(" +
+                        // 年月日のパターン（例: 2023年12月31日, 2023/12/31）
+                        "\\d{2,4}[年/.\\s-]\\s*\\d{1,2}[月/.\\s-]\\s*\\d{1,2}日?|" +
+                        // 日月年のパターン（例: 31/12/2023, 31.12.23）
+                        "\\d{1,2}[/.\\s-]\\d{1,2}[/.\\s-]\\d{2,4}|" +
+                        // 年月のみのパターン（例: 2026.02, 2026年02月, 26/02）
+                        "\\d{2,4}[年/.\\s-]\\s*\\d{1,2}月?" +
+                        ")"
         );
 
         Matcher matcher = datePattern.matcher(text);
         if (matcher.find()) {
-            return matcher.group(2);
+            if(matcher.group(1) != null) {
+                return matcher.group(1)+" "+matcher.group(2);
+            }else {
+                return matcher.group(2);
+            }
         }
         return null;
     }
@@ -87,7 +100,8 @@ public class ExpiryDateScannerActivity extends BaseCameraActivity {
         // 様々なフォーマットに対応する必要がある
         String[] formats = {
                 "yyyy年MM月dd日", "yyyy/MM/dd", "yyyy-MM-dd",
-                "yy年MM月dd日", "yy/MM/dd", "yy.MM.dd"
+                "yy年MM月dd日", "yy/MM/dd", "yy.MM.dd",
+                "yyyy年MM月", "yyyy/MM", "yyyy.MM", "yy/MM", "yy.MM"
         };
 
         for (String format : formats) {

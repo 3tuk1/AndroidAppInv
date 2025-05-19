@@ -42,6 +42,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class FoodItemFragment extends Fragment {
+    /**
+     * FoodItemFragmentは、食品アイテムの詳細を編集するためのフラグメントです。
+     * 食品アイテムの名前、数量、カテゴリー、賞味期限、場所、画像を管理します。
+     */
     private ActivityResultLauncher<Intent> galleryLauncher;
     private EditText nameEditText;
     private EditText quantityEditText;
@@ -91,28 +95,28 @@ public class FoodItemFragment extends Fragment {
         locationDao = db.locationDao();
 
         // 引数からIDを取得し、アイテム情報を取得
-        if (getArguments() != null) {
+        if (getArguments() != null) { // バンドルがnullでない場合
+            // 引数からアイテムIDを取得 何もない状態を-1と設定する
             int itemId = getArguments().getInt("itemId", -1);
             if (itemId != -1) {
+                // アイテム情報を取得
                 executor.execute(() -> {
-                    MainItemJoin itemWithImages = itemImageDao.getItemWithItemImageById(itemId);
-                    Location location = locationDao.getLocationByItemId(itemId);
-
-                    if (itemWithImages != null && getActivity() != null) {
-                        MainItem item = itemWithImages.mainItem;
+                    MainItemJoin allJoin = mainItemDao.getMainItemWithImagesAndLocationById(itemId);
+                    if (allJoin != null && getActivity() != null) {
+                        MainItem item = allJoin.mainItem;
                         getActivity().runOnUiThread(() -> {
                             nameEditText.setText(item.getName());
                             quantityEditText.setText(String.valueOf(item.getQuantity()));
                             expiryEditText.setText(item.getExpirationDate());
 
                             // 場所情報を設定
-                            if (location != null) {
-                                locationEditText.setText(location.getLocation());
+                            if (allJoin.location != null) {
+                                locationEditText.setText(allJoin.location.getLocation());
                             }
 
                             // 画像の設定
-                            if (itemWithImages.images != null && !itemWithImages.images.isEmpty()) {
-                                ItemImage firstImage = itemWithImages.images.get(0);
+                            if (allJoin.images != null && !allJoin.images.isEmpty()) {
+                                ItemImage firstImage = allJoin.images.get(0);
                                 imagePath = firstImage.getImagePath();
 
                                 if (imagePath != null && !imagePath.isEmpty()) {
@@ -275,8 +279,8 @@ public class FoodItemFragment extends Fragment {
         });
 
         // ギャラリーからの写真選択用ランチャー
-        galleryLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
+        galleryLauncher = registerForActivityResult(//　Android標準のAPIに接続
+                new ActivityResultContracts.StartActivityForResult(),//　結果を受け取るためのAPI
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         Uri selectedImageUri = result.getData().getData();
@@ -299,7 +303,7 @@ public class FoodItemFragment extends Fragment {
         cameraLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {// 正常に実効されたかと結果がnullでないか
                         // 実際のファイルパスを取得
                         String photoPath = result.getData().getStringExtra("photo_path");
                         if (photoPath != null) {

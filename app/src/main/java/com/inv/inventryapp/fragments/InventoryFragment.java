@@ -26,7 +26,7 @@ public class InventoryFragment extends Fragment {
 
     private static final String TAG = "InventoryFragment";
     private MainItemDao mainItemDao;
-    private RecyclerView recyclerView;
+    private RecyclerView recyclerView; // 大量のデータのスクロール表示のためのRecyclerView
     private FoodItemAdapter adapter;
     private List<MainItemJoin> allItems;
     private List<MainItemJoin> filteredItems;
@@ -52,12 +52,15 @@ public class InventoryFragment extends Fragment {
 
         // アイテムをタップした時の処理
         adapter.setOnItemClickListener((parent, itemView, position, id) -> {
-            if (position >= 0 && position < adapter.getItemCount()) {
-                MainItemJoin selectedItem = adapter.getItem(position);
-                if (selectedItem != null && selectedItem.mainItem != null) {
+            // parentはRecyclerViewのインスタンス,itemViewはタップされたアイテムのView
+            // positionはタップされたアイテムの位置,long idはアイテムのID
+            if (position >= 0 && position < adapter.getItemCount()) {// アイテムがホルダーの中にあるか確認
+                MainItemJoin selectedItem = adapter.getItem(position); // 選択されたアイテムを取得
+                if (selectedItem != null && selectedItem.mainItem != null) { // 選択されたアイテムがnullでないか確認
+                    // FoodItemFragmentのインスタンスを作成
                     FoodItemFragment fragment = new FoodItemFragment();
 
-                    Bundle bundle = new Bundle();
+                    Bundle bundle = new Bundle();// アイテムの情報を渡すためのBundleを作成
                     bundle.putInt("itemId", selectedItem.mainItem.getId());
                     fragment.setArguments(bundle);
 
@@ -76,33 +79,9 @@ public class InventoryFragment extends Fragment {
         return view;
     }
 
-    // データ初期化メソッド
     private void init() {
-        executor.execute(() -> {
-            try {
-                // 結合クエリでMainItem、ItemImage、Locationを一度に取得
-                List<MainItemJoin> items = mainItemDao.getMainItemWithImagesAndLocation();
-
-                // UIスレッドでの更新
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        allItems = items != null ? items : new ArrayList<>();
-                        filteredItems = new ArrayList<>(allItems);
-                        adapter.updateItems(filteredItems);
-                    });
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "データ初期化中にエラーが発生しました", e);
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        // エラー発生時は空のリストを表示
-                        allItems = new ArrayList<>();
-                        filteredItems = new ArrayList<>();
-                        adapter.updateItems(filteredItems);
-                    });
-                }
-            }
-        });
+        // データベースからデータを取得して表示
+        loadItems();
     }
 
     // 外部からデータ更新を要求するためのメソッド
@@ -113,8 +92,12 @@ public class InventoryFragment extends Fragment {
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
+                        // もしitemsがnullの場合はnew ArrayListを使う
+                        // それ以外はitemsを使う
                         allItems = items != null ? items : new ArrayList<>();
+                        // フィルタリングされたアイテムを初期化
                         filteredItems = new ArrayList<>(allItems);
+                        // アダプターにアイテムをセット
                         adapter.updateItems(filteredItems);
                     });
                 }

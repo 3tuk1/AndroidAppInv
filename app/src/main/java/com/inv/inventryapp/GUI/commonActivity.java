@@ -25,7 +25,6 @@ public class commonActivity extends AppCompatActivity {
         if(savedInstanceState == null) {
             loadFragment(new InventoryFragment());
         }
-
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setSelectedItemId(R.id.navigation_inventory);
         // タブ選択リスナー
@@ -34,6 +33,9 @@ public class commonActivity extends AppCompatActivity {
 
             if (itemId == R.id.navigation_inventory) {
                 // Inventoryタブが選択された場合
+                // InvHomeを起動
+                Intent intent = new Intent(this, com.inv.inventryapp.GUI.InvHome.class);
+                startActivity(intent);
                 loadFragment(new InventoryFragment());
                 return true;
             } else if (itemId == R.id.navigation_settings) {
@@ -50,6 +52,9 @@ public class commonActivity extends AppCompatActivity {
                 return true;
             }
             return false;
+        });
+        bottomNav.setOnItemReselectedListener(item -> {
+            // 何もしない
         });
     }
     private void loadFragment(InventoryFragment inventoryFragment) {

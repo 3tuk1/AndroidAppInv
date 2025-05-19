@@ -3,12 +3,9 @@ package com.inv.inventryapp.GUI;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.inv.inventryapp.R;
-import com.inv.inventryapp.fragments.InventoryFragment;
 
 public class InvHome extends commonActivity {
     @Override
@@ -16,6 +13,7 @@ public class InvHome extends commonActivity {
         // 前にsavedInstanceStateがnullでない場合は、前の状態を復元する
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         FloatingActionButton scanButton = findViewById(R.id.scan_button);
 
         // ツールバーの設定

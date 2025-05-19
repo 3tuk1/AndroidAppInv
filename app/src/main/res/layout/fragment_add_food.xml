@@ -64,7 +64,7 @@
                 android:textColor="@color/neon_green"
                 android:backgroundTint="@color/purple_700"
                 android:textColorHint="@color/blue"
-                android:inputType="numberDecimal" />
+                android:inputType="text" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"

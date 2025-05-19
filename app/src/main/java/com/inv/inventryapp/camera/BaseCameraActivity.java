@@ -42,17 +42,14 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
-        // カメラパーミッションのチェック
-        if (!checkPermissions()) {
-            return;
-        }
-        if (allPermissionsGranted()) {
+        // 権限の確認
+        if (checkPermissions()) {
             startCamera();
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
         }
 
-        cameraExecutor = Executors.newSingleThreadExecutor();
+        cameraExecutor = Executors.newSingleThreadExecutor();// シングルスレッドのExecutorを作成
         setupCamera();
     }
 
@@ -61,6 +58,7 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
     protected abstract void processImage(ImageAnalysis imageAnalysis);
 
     private void startCamera() {
+        // カメラの初期化、非同期処理、終了時のリスナーを設定
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
                 ProcessCameraProvider.getInstance(this);
 
@@ -81,10 +79,12 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
 
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
 
+                // カメラのバインドを解除
                 cameraProvider.unbindAll();
 
                 processImage(imageAnalysis);
 
+                // カメラのバインド
                 cameraProvider.bindToLifecycle(this, cameraSelector,
                         preview, imageCapture, imageAnalysis);
 
@@ -94,7 +94,7 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private boolean allPermissionsGranted() {
+    /*private boolean allPermissionsGranted() {
         for (String permission : REQUIRED_PERMISSIONS) {
             if (ContextCompat.checkSelfPermission(this, permission) !=
                     PackageManager.PERMISSION_GRANTED) {
@@ -102,14 +102,14 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
             }
         }
         return true;
-    }
+    }*/
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
+            if (checkPermissions()) {
                 startCamera();
             } else {
                 Toast.makeText(this, "カメラの権限がありません", Toast.LENGTH_SHORT).show();
@@ -117,17 +117,18 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
             }
         }
     }
-    private static final int PERMISSION_REQUEST_CODE = 200;
 
     private boolean checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             // Android 13以降
+            // READ_MEDIA_IMAGES権限を確認
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
                     != PackageManager.PERMISSION_GRANTED) {
+                // READ_MEDIA_IMAGES権限がない場合、リクエスト
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.READ_MEDIA_IMAGES,
                                 Manifest.permission.CAMERA},
-                        PERMISSION_REQUEST_CODE);
+                        REQUEST_CODE_PERMISSIONS);
                 return false;
             }
         }
@@ -137,7 +138,7 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.CAMERA},
-                    PERMISSION_REQUEST_CODE);
+                    REQUEST_CODE_PERMISSIONS);
             return false;
         }
 
@@ -149,6 +150,8 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
         super.onDestroy();
         cameraExecutor.shutdown();
     }
+    // アクティビティクラス
+    // 戻るボタンを押したときの処理
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // 戻るボタンが押されたときの処理
