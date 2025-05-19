@@ -2,10 +2,12 @@ package com.inv.inventryapp.GUI;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.inv.inventryapp.R;
 import com.inv.inventryapp.camera.BarcodeScannerActivity;
@@ -14,55 +16,70 @@ import com.inv.inventryapp.camera.ReceiptScannerActivity;
 import com.inv.inventryapp.fragments.FoodItemFragment;
 import com.inv.inventryapp.fragments.InventoryFragment;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class commonActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<Intent> barcodeScannerLauncher;
 
+    private static int currentTab = 0;
     protected void initCommonActivity(Bundle savedInstanceState) {
         // Initialize common components here
         // For example, set up toolbar, navigation drawer, etc.
         // デフォルトタブ選択
 
-        if(savedInstanceState == null) {
-            loadFragment(new InventoryFragment());
-        }
+
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-        bottomNav.setSelectedItemId(R.id.navigation_inventory);
-        // タブ選択リスナー
+
+        // 現在のアクティビティに基づいてナビゲーションの選択状態を設定
+        if (this instanceof InvHome) {
+            bottomNav.setSelectedItemId(R.id.navigation_inventory);
+            currentTab = 0;
+        } else if (this instanceof SettingsActivity) {
+            bottomNav.setSelectedItemId(R.id.navigation_settings);
+            currentTab = 1;
+        } else if (this instanceof AnalysisActivity) {
+            bottomNav.setSelectedItemId(R.id.navigation_analysis);
+            currentTab = 2;
+        } else if (this instanceof SavingManeyActivity) {
+            bottomNav.setSelectedItemId(R.id.navigation_saving);
+            currentTab = 3;
+        }
+
         bottomNav.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
+            int selectedTab = -1;
+            Class<?> targetActivity = null;
 
             if (itemId == R.id.navigation_inventory) {
-                // Inventoryタブが選択された場合
-                // InvHomeを起動
-                Intent intent = new Intent(this, com.inv.inventryapp.GUI.InvHome.class);
-                startActivity(intent);
-                loadFragment(new InventoryFragment());
-                return true;
+                selectedTab = 0;
+                targetActivity = com.inv.inventryapp.GUI.InvHome.class;
             } else if (itemId == R.id.navigation_settings) {
+                selectedTab = 1;
+                targetActivity = com.inv.inventryapp.GUI.SettingsActivity.class;
+            } else if (itemId == R.id.navigation_analysis) {
+                selectedTab = 2;
+                targetActivity = com.inv.inventryapp.GUI.AnalysisActivity.class;
+            } else if (itemId == R.id.navigation_saving) {
+                selectedTab = 3;
+                targetActivity = com.inv.inventryapp.GUI.SavingManeyActivity.class;
+            }
 
-                Intent intent = new Intent(this, com.inv.inventryapp.GUI.SettingsActivity.class);
-                startActivity(intent);
-                // Settingsタブが選択された場合
-                //loadFragment();
-                return true;
-            }else if (itemId == R.id.navigation_analysis) {
-                // Analysisタブが選択された場合
-                //loadFragment();
-                Intent intent = new Intent(this, com.inv.inventryapp.GUI.AnalysisActivity.class);
-                startActivity(intent);
-                return true;
-            }else if (itemId == R.id.navigation_saving){
-                // Savingタブが選択された場合
-                //loadFragment();
-                Intent intent = new Intent(this, com.inv.inventryapp.GUI.SavingManeyActivity.class);
-                startActivity(intent);
+            // 同じタブが選択された場合は何もしない
+            if (selectedTab == currentTab) {
                 return true;
             }
-            return false;
-        });
-        bottomNav.setOnItemReselectedListener(item -> {
-            // 何もしない
+
+            // 新しいタブの場合
+            if (targetActivity != null) {
+                currentTab = selectedTab;
+
+                Intent intent = new Intent(this, targetActivity);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            }
+
+            return true;
         });
 
         // ActivityResultLauncherの初期化
@@ -82,12 +99,30 @@ public class commonActivity extends AppCompatActivity {
                     }
                 });
     }
-    private void loadFragment(InventoryFragment inventoryFragment) {
+    void settings(){
+        // ツールバーの設定
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // カスタムタイトルを設定
+        TextView titleTextView = findViewById(R.id.toolbar_title);
+        titleTextView.setText(R.string.app_name); // 必要に応じてタイトルを変更
+
+        // ステータスバーの色を設定
+        getWindow().setStatusBarColor(getResources().getColor(R.color.background_dark, getTheme()));
+
+        // デフォルトのタイトルを非表示
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
+    }
+    protected void loadFragment(InventoryFragment inventoryFragment) {
         // フラグメントのトランザクションを開始
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, inventoryFragment)
                 .commit();
     }
+
     void showCameraOptions() {
         String[] options = {"バーコードスキャン", "レシート読み取り", "賞味期限スキャン", "手動入力"};
 

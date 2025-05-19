@@ -6,6 +6,7 @@ import android.widget.TextView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.inv.inventryapp.R;
+import com.inv.inventryapp.fragments.InventoryFragment;
 
 public class InvHome extends commonActivity {
     @Override
@@ -16,23 +17,11 @@ public class InvHome extends commonActivity {
 
         FloatingActionButton scanButton = findViewById(R.id.scan_button);
 
-        // ツールバーの設定
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        // カスタムタイトルを設定
-        TextView titleTextView = findViewById(R.id.toolbar_title);
-        titleTextView.setText(R.string.app_name); // 必要に応じてタイトルを変更
-
-        // ステータスバーの色を設定
-        getWindow().setStatusBarColor(getResources().getColor(R.color.background_dark, getTheme()));
-
-        // デフォルトのタイトルを非表示
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
-        }
+        settings();
 
         initCommonActivity(savedInstanceState);
+
+        loadFragment(new InventoryFragment());
 
         // MainActivity内で
         ImageButton menuButton = findViewById(R.id.menu_button);
@@ -43,8 +32,6 @@ public class InvHome extends commonActivity {
         // FABのクリックリスナー
         scanButton.setOnClickListener(v -> {
             // カメラ/スキャン画面を開く
-            // Intent intent = new Intent(MainActivity.this, BarcodeScannerActivity.class);
-            // startActivity(intent);
             showCameraOptions();
         });
     }

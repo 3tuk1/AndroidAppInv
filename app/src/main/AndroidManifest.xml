@@ -40,6 +40,9 @@
                 android:exported="false" />
 
         <activity android:name=".GUI.InvHome" />
+        <activity android:name=".GUI.AnalysisActivity" />
+        <activity android:name=".GUI.SavingManeyActivity" />
+        <activity android:name=".GUI.SettingsActivity" />
         <provider
                 android:name="androidx.core.content.FileProvider"
                 android:authorities="${applicationId}.fileprovider"

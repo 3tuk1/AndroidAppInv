@@ -9,12 +9,9 @@ public class AnalysisActivity extends commonActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nomain);
         setTitle("Analysis");
+        settings();
+        initCommonActivity(savedInstanceState);
         // Initialize your views and other components here
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
 }

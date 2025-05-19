@@ -10,14 +10,10 @@ public class SettingsActivity extends commonActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nomain);
 
-        // Initialize the toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-
         // Set the title of the activity
         setTitle("Settings");
+        settings();
+        initCommonActivity(savedInstanceState);
     }
 
 }
