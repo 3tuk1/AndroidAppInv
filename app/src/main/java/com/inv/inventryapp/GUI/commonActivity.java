@@ -40,16 +40,23 @@ public class commonActivity extends AppCompatActivity {
                 loadFragment(new InventoryFragment());
                 return true;
             } else if (itemId == R.id.navigation_settings) {
+
+                Intent intent = new Intent(this, com.inv.inventryapp.GUI.SettingsActivity.class);
+                startActivity(intent);
                 // Settingsタブが選択された場合
                 //loadFragment();
                 return true;
             }else if (itemId == R.id.navigation_analysis) {
                 // Analysisタブが選択された場合
                 //loadFragment();
+                Intent intent = new Intent(this, com.inv.inventryapp.GUI.AnalysisActivity.class);
+                startActivity(intent);
                 return true;
             }else if (itemId == R.id.navigation_saving){
                 // Savingタブが選択された場合
                 //loadFragment();
+                Intent intent = new Intent(this, com.inv.inventryapp.GUI.SavingManeyActivity.class);
+                startActivity(intent);
                 return true;
             }
             return false;
