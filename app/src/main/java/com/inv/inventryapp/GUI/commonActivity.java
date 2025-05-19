@@ -2,21 +2,22 @@ package com.inv.inventryapp.GUI;
 
 import android.content.Intent;
 import android.os.Bundle;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.inv.inventryapp.MainActivity;
 import com.inv.inventryapp.R;
 import com.inv.inventryapp.camera.BarcodeScannerActivity;
-import com.inv.inventryapp.camera.BaseCameraActivity;
 import com.inv.inventryapp.camera.ExpiryDateScannerActivity;
 import com.inv.inventryapp.camera.ReceiptScannerActivity;
 import com.inv.inventryapp.fragments.FoodItemFragment;
 import com.inv.inventryapp.fragments.InventoryFragment;
 
 public class commonActivity extends AppCompatActivity {
-    // init common activity
+
+    private ActivityResultLauncher<Intent> barcodeScannerLauncher;
+
     protected void initCommonActivity(Bundle savedInstanceState) {
         // Initialize common components here
         // For example, set up toolbar, navigation drawer, etc.
@@ -56,6 +57,23 @@ public class commonActivity extends AppCompatActivity {
         bottomNav.setOnItemReselectedListener(item -> {
             // 何もしない
         });
+
+        // ActivityResultLauncherの初期化
+        barcodeScannerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == AppCompatActivity.RESULT_OK && result.getData() != null) {
+                        Bundle bdata = result.getData().getExtras();
+                        if (bdata != null) {
+                            FoodItemFragment fragment = new FoodItemFragment();
+                            fragment.setArguments(bdata);
+                            getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.fragment_container, fragment)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
+                    }
+                });
     }
     private void loadFragment(InventoryFragment inventoryFragment) {
         // フラグメントのトランザクションを開始
@@ -73,7 +91,8 @@ public class commonActivity extends AppCompatActivity {
                     switch (which) {
                         case 0: // バーコードスキャン
                             intent = new Intent(this, BarcodeScannerActivity.class);
-                            break;
+                            barcodeScannerLauncher.launch(intent); // 初期化済みのランチャーを使用
+                            return; // startActivityを呼ばないためreturn
                         case 1: // レシート読み取り
                             intent = new Intent(this, ReceiptScannerActivity.class);
                             break;
@@ -86,7 +105,7 @@ public class commonActivity extends AppCompatActivity {
                                     .replace(R.id.fragment_container, fragment)
                                     .addToBackStack(null)
                                     .commit();
-                            break;
+                            return; // startActivityを呼ばないためreturn
                     }
                     if (intent != null) {
                         startActivity(intent);

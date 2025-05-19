@@ -10,36 +10,7 @@ public class Converters {
     ///
     /// とった画像はbyte
     // Bitmap を byte[] に変換するメソッド
-    @TypeConverter
-    public static byte[] fromBitmap(Bitmap bitmap) {
-        if (bitmap == null) return null;
-
-        // より小さいサイズに圧縮してから変換
-        Bitmap compressedBitmap = compressImage(bitmap);
-
-        // JPEG形式で圧縮率を上げる（品質を下げる）
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        compressedBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream);
-
-        // 元のビットマップと圧縮したビットマップが異なる場合はリサイクル
-        if (compressedBitmap != bitmap) {
-            compressedBitmap.recycle();
-        }
-
-        return outputStream.toByteArray();
-    }
-
-    // byte[] を Bitmap に変換するメソッド
-    @TypeConverter
-    public static Bitmap toBitmap(byte[] byteArray) {
-        if (byteArray == null) return null;
-
-        // byte[] を Bitmap に変換
-        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
-    }
-
-    // ビットマップを圧縮するメソッド
-    private static Bitmap compressImage(Bitmap original) {
+    public static Bitmap compressImage(Bitmap original) {
         if (original == null) return null;
 
         int width = original.getWidth();
@@ -52,6 +23,12 @@ public class Converters {
         int newWidth = Math.round(width * scale);
         int newHeight = Math.round(height * scale);
 
-        return Bitmap.createScaledBitmap(original, newWidth, newHeight, true);
+
+        Bitmap newBitmap = Bitmap.createScaledBitmap(original, newWidth, newHeight, true);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        newBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream);
+
+        return newBitmap;
     }
 }

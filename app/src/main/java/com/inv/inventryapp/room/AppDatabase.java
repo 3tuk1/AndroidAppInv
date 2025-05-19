@@ -16,7 +16,7 @@ import com.inv.inventryapp.models.MainItem;
                 Location.class,
                 Barcode.class  // バーコードエンティティを追加
         },
-        version = 2,  // バージョンを上げる
+        version = 3,  // バージョンを上げる
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {

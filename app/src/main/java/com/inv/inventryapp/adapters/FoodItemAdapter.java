@@ -23,6 +23,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static com.inv.inventryapp.room.Converters.compressImage;
+
 public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodItemViewHolder> {
 
     /**
@@ -71,6 +73,7 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
                 File imgFile = new File(imagePath);
                 if (imgFile.exists()) {
                     Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+                    bitmap = compressImage(bitmap);
                     holder.foodImageView.setImageBitmap(bitmap);
                 } else {
                     holder.foodImageView.setImageResource(R.drawable.default_food_image);

@@ -1,6 +1,7 @@
 package com.inv.inventryapp.camera;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 import androidx.camera.core.ImageAnalysis;
@@ -10,10 +11,19 @@ import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.common.InputImage;
 import com.inv.inventryapp.R;
+import com.inv.inventryapp.fragments.FoodItemFragment;
+import com.inv.inventryapp.models.MainItemJoin;
+import com.inv.inventryapp.room.AppDatabase;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static androidx.core.content.ContentProviderCompat.requireContext;
 
 public class BarcodeScannerActivity extends BaseCameraActivity {
     private TextView barcodeResultView;
     private BarcodeScanner scanner;
+    ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void setupCamera() {
@@ -52,8 +62,24 @@ public class BarcodeScannerActivity extends BaseCameraActivity {
                         for (Barcode barcode : barcodes) {
                             String barcodeValue = barcode.getRawValue();
                             runOnUiThread(() -> {
-                                barcodeResultView.setText("バーコード: " + barcodeValue);
-                                // FoodItemにバーコードをセットするなどの処理をここで行う
+                                if (barcodeValue != null) {
+                                    barcodeResultView.setText("バーコード: " + barcodeValue);
+                                    // バーコードの値がデータベースに存在するか確認
+                                    databaseExecutor.execute(() -> {
+                                        AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+                                        final Bundle bundle = new Bundle();
+
+                                        if (db.barcodeDao().existsBarcodeValue(barcodeValue)) {
+                                            MainItemJoin selectedItem = db.barcodeDao().getItemByBarcodeValue(barcodeValue);
+                                            bundle.putInt("itemId", selectedItem.mainItem.getId());
+                                        } else {
+                                            bundle.putString("barcode", barcodeValue);
+                                            bundle.putBoolean("isNewItem", true);
+                                        }
+                                        setResult(BarcodeScannerActivity.RESULT_OK, new Intent().putExtras(bundle));
+                                        finish();
+                                    });
+                                }
                             });
                             // バーコードが見つかったら画面を閉じるなどの処理
                             // setResult(Activity.RESULT_OK, new Intent().putExtra("barcode", barcodeValue));

@@ -25,17 +25,14 @@ public class Barcode {
     @ColumnInfo(name = "barcode_value")
     private String barcodeValue;
 
-    @ColumnInfo(name = "barcode_type")
-    private String barcodeType;
 
     @ColumnInfo(name = "timestamp")
     private long timestamp;
 
     // コンストラクタ
-    public Barcode(int itemId, String barcodeValue, String barcodeType) {
+    public Barcode(int itemId, String barcodeValue) {
         this.itemId = itemId;
         this.barcodeValue = barcodeValue;
-        this.barcodeType = barcodeType;
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -47,10 +44,8 @@ public class Barcode {
     public void setItemId(int itemId) { this.itemId = itemId; }
 
     public String getBarcodeValue() { return barcodeValue; }
-    public void setBarcodeValue(String barcodeValue) { this.barcodeValue = barcodeValue; }
 
-    public String getBarcodeType() { return barcodeType; }
-    public void setBarcodeType(String barcodeType) { this.barcodeType = barcodeType; }
+    public void setBarcodeValue(String barcodeValue) { this.barcodeValue = barcodeValue; }
 
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }

@@ -86,7 +86,8 @@ public class ExpiryDateScannerActivity extends BaseCameraActivity {
 
         Matcher matcher = datePattern.matcher(text);
         if (matcher.find()) {
-            if(matcher.group(1) != null) {
+            // マッチした部分を取得
+            if(Objects.equals(matcher.group(1), "消費期限") || Objects.equals(matcher.group(1), "賞味期限") || Objects.equals(matcher.group(1), "期限")) {
                 return matcher.group(1)+" "+matcher.group(2);
             }else {
                 return matcher.group(2);

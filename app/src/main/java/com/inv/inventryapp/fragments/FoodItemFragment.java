@@ -21,25 +21,19 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import com.inv.inventryapp.R;
 import com.inv.inventryapp.camera.SimpleCameraActivity;
-import com.inv.inventryapp.models.MainItem;
-import com.inv.inventryapp.models.ItemImage;
-import com.inv.inventryapp.models.Location;
-import com.inv.inventryapp.models.MainItemJoin;
-import com.inv.inventryapp.room.AppDatabase;
-import com.inv.inventryapp.room.MainItemDao;
-import com.inv.inventryapp.room.ItemImageDao;
-import com.inv.inventryapp.room.LocationDao;
+import com.inv.inventryapp.models.*;
+import com.inv.inventryapp.room.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import static com.inv.inventryapp.room.Converters.compressImage;
+
 
 public class FoodItemFragment extends Fragment {
     /**
@@ -62,6 +56,7 @@ public class FoodItemFragment extends Fragment {
     private MainItemDao mainItemDao;
     private ItemImageDao itemImageDao;
     private LocationDao locationDao;
+    private BarcodeDao BarcodeDao; // バーコードDAOの変数
     private Executor executor = Executors.newSingleThreadExecutor();
 
     @Nullable
@@ -93,6 +88,7 @@ public class FoodItemFragment extends Fragment {
         mainItemDao = db.mainItemDao();
         itemImageDao = db.itemImageDao();
         locationDao = db.locationDao();
+        BarcodeDao = db.barcodeDao();
 
         // 引数からIDを取得し、アイテム情報を取得
         if (getArguments() != null) { // バンドルがnullでない場合
@@ -123,6 +119,7 @@ public class FoodItemFragment extends Fragment {
                                     File imgFile = new File(imagePath);
                                     if (imgFile.exists()) {
                                         Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+                                        bitmap = compressImage(bitmap);
                                         foodImageView.setImageBitmap(bitmap);
                                     } else {
                                         foodImageView.setImageResource(R.drawable.default_food_image);
@@ -196,6 +193,10 @@ public class FoodItemFragment extends Fragment {
                     // 更新または新規作成の処理
                     if (getArguments() != null) {
                         itemId = getArguments().getInt("itemId", -1);
+                        if(getArguments().getBoolean("isNewItem", false)) {
+                            barcode = getArguments().getString("barcode", null);
+                        }
+                        //barcode = getArguments().getString("barcode", null);
                     }
 
                     if (itemId != -1) {
@@ -261,6 +262,22 @@ public class FoodItemFragment extends Fragment {
                             itemImageDao.insert(newImage);
                         }
                     }
+                    if(barcode != null && !barcode.isEmpty()) {
+
+                        // バーコード情報の保存
+                        Barcode existingBarcode = BarcodeDao.getBarcodesForItem(finalItemId);
+                        if (existingBarcode != null) {
+                            existingBarcode.setBarcodeValue(barcode);
+                            BarcodeDao.update(existingBarcode);
+                        } else {
+                            Barcode newBarcode = new Barcode(
+                                    finalItemId,
+                                    barcode
+                            );
+                            BarcodeDao.insert(newBarcode);
+                        }
+
+                    }
 
                     requireActivity().runOnUiThread(() -> {
                         Toast.makeText(getContext(), "保存しました", Toast.LENGTH_SHORT).show();
@@ -290,6 +307,7 @@ public class FoodItemFragment extends Fragment {
 
                             // 画像を表示
                             Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+                            bitmap = compressImage(bitmap);
                             foodImageView.setImageBitmap(bitmap);
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -312,6 +330,7 @@ public class FoodItemFragment extends Fragment {
 
                             // 画像を表示
                             Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+                            bitmap = compressImage(bitmap);
                             foodImageView.setImageBitmap(bitmap);
 
                             Log.d("FoodItemFragment", "写真のパスをデータベースに保存: " + imagePath);
@@ -326,6 +345,7 @@ public class FoodItemFragment extends Fragment {
 
                                     // 画像を表示
                                     Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+                                    bitmap = compressImage(bitmap);
                                     foodImageView.setImageBitmap(bitmap);
                                 } catch (Exception e) {
                                     e.printStackTrace();

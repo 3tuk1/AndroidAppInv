@@ -30,7 +30,7 @@ public interface BarcodeDao {
     Barcode getBarcodeById(int id);
 
     @Query("SELECT * FROM barcodes WHERE item_id = :itemId")
-    List<Barcode> getBarcodesForItem(int itemId);
+    Barcode getBarcodesForItem(int itemId);
 
     @Query("SELECT * FROM barcodes WHERE barcode_value = :value")
     Barcode getBarcodeByValue(String value);
@@ -49,4 +49,8 @@ public interface BarcodeDao {
     @Transaction
     @Query("SELECT m.*, b.* FROM main_items m JOIN barcodes b ON m.id = b.item_id WHERE b.barcode_value = :barcodeValue")
     MainItemJoin getItemByBarcodeValue(String barcodeValue);
+
+    // 指定されたバーコード値が存在するかどうかを確認
+    @Query("SELECT EXISTS(SELECT 1 FROM barcodes WHERE barcode_value = :barcodeValue LIMIT 1)")
+    boolean existsBarcodeValue(String barcodeValue);
 }
