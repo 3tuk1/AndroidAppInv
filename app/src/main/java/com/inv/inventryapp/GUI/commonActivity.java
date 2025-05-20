@@ -16,9 +16,7 @@ import com.inv.inventryapp.camera.ReceiptScannerActivity;
 import com.inv.inventryapp.fragments.FoodItemFragment;
 import com.inv.inventryapp.fragments.InventoryFragment;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-public class commonActivity extends AppCompatActivity {
+public abstract class commonActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<Intent> barcodeScannerLauncher;
 
@@ -67,6 +65,10 @@ public class commonActivity extends AppCompatActivity {
 
             // 同じタブが選択された場合は何もしない
             if (selectedTab == currentTab) {
+                if(this instanceof InvHome) {
+                    // InventoryFragmentが表示されている場合は、スキャンボタンを表示
+                    getSupportFragmentManager().popBackStack();
+                }
                 return true;
             }
 
@@ -155,4 +157,6 @@ public class commonActivity extends AppCompatActivity {
                 })
                 .show();
     }
+
+    public abstract void onBackStackChanged();
 }

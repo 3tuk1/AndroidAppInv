@@ -18,4 +18,9 @@ public class SavingManeyActivity extends commonActivity{
 
     }
 
+
+    @Override
+    public void onBackStackChanged() {
+
+    }
 }

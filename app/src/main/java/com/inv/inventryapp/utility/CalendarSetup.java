@@ -21,8 +21,9 @@ public abstract class CalendarSetup {
 
 
     // ヘルパーメソッドとして実装
-    public void setupCalendar(CalendarView calendarView) {
+    public void setupCalendar(CalendarView calendarView,View view) {
         // 開始日と終了日を設定
+        TextView monthTextView = view.findViewById(R.id.monthTextView);
         YearMonth currentMonth = YearMonth.now();
         YearMonth startMonth = currentMonth.minusMonths(6);
         YearMonth endMonth = currentMonth.plusMonths(6);
@@ -30,7 +31,9 @@ public abstract class CalendarSetup {
 
         calendarView.setup(startMonth, endMonth, firstDayOfWeek);
         calendarView.scrollToMonth(currentMonth);
-
+        if(monthTextView != null) {
+            monthTextView.setText(currentMonth.toString());
+        }
         calendarView.setDayBinder(new MonthDayBinder<DayViewContainer>() {
             @NonNull
             @Override
@@ -70,6 +73,10 @@ public abstract class CalendarSetup {
         // 月が変わったときのリスナー
         calendarView.setMonthScrollListener(month -> {
             // 月が変わったときの処理
+            if(monthTextView != null) {
+                monthTextView.setText(month.getYearMonth().toString());
+            }
+
             YearMonth selectedMonth = month.getYearMonth();
             onMonthChanged(selectedMonth);
             return null;

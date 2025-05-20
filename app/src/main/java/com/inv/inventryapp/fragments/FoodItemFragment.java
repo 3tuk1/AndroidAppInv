@@ -69,6 +69,8 @@ public class FoodItemFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_add_food, container, false);
 
+
+
         // 各Viewを取得
         nameEditText = view.findViewById(R.id.nameEditText);
         quantityEditText = view.findViewById(R.id.quantityEditText);
@@ -150,21 +152,6 @@ public class FoodItemFragment extends Fragment {
                 });
             }
         }
-
-        // 日付の設定
-        /*expiryEditText.setOnClickListener(v -> {
-            Calendar calendar = Calendar.getInstance();
-            int year = calendar.get(Calendar.YEAR);
-            int month = calendar.get(Calendar.MONTH);
-            int day = calendar.get(Calendar.DAY_OF_MONTH);
-            DatePickerDialog datePickerDialog = new DatePickerDialog(requireContext(),
-                    (view1, selectedYear, selectedMonth, selectedDay) -> {
-                        String selectedDate = selectedYear + "/" + (selectedMonth + 1) + "/" + selectedDay;
-                        expiryEditText.setText(selectedDate);
-                    },
-                    year, month, day);
-            datePickerDialog.show();
-        });*/
         expiryEditText.setOnClickListener(v -> {
             // カレンダーダイアログ用のレイアウトをインフレート
             View calendarDialogView = getLayoutInflater().inflate(R.layout.calendar_dialog, null);
@@ -174,12 +161,11 @@ public class FoodItemFragment extends Fragment {
 
             // カレンダーのセットアップ
             SelectCalendar selectCalendar = SelectCalendar.getInstance();
-            selectCalendar.setupCalendar(calendarView);
+            selectCalendar.setupCalendar(calendarView,calendarDialogView);
 
             // ダイアログの作成と表示
             AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-            builder.setTitle("賞味期限を選択")
-                    .setView(calendarDialogView)
+            builder.setView(calendarDialogView)
                     .setPositiveButton("OK", (dialog, which) -> {
                         String selectedDate = selectCalendar.getSelectedDate();
                         if (selectedDate != null) {

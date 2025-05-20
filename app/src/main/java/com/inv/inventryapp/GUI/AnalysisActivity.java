@@ -14,4 +14,8 @@ public class AnalysisActivity extends commonActivity{
         // Initialize your views and other components here
     }
 
+    @Override
+    public void onBackStackChanged() {
+
+    }
 }

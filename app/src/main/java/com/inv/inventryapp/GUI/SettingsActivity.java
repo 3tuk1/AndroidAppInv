@@ -15,5 +15,9 @@ public class SettingsActivity extends commonActivity{
         settings();
         initCommonActivity(savedInstanceState);
     }
+    @Override
+    public void onBackStackChanged() {
+
+    }
 
 }
