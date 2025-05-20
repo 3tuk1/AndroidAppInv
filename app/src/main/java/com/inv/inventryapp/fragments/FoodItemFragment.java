@@ -23,6 +23,9 @@ import com.inv.inventryapp.R;
 import com.inv.inventryapp.camera.SimpleCameraActivity;
 import com.inv.inventryapp.models.*;
 import com.inv.inventryapp.room.*;
+import com.inv.inventryapp.utility.CalendarSetup;
+import com.inv.inventryapp.utility.SelectCalendar;
+import com.kizitonwose.calendar.view.CalendarView;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -149,7 +152,7 @@ public class FoodItemFragment extends Fragment {
         }
 
         // 日付の設定
-        expiryEditText.setOnClickListener(v -> {
+        /*expiryEditText.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
             int year = calendar.get(Calendar.YEAR);
             int month = calendar.get(Calendar.MONTH);
@@ -161,6 +164,30 @@ public class FoodItemFragment extends Fragment {
                     },
                     year, month, day);
             datePickerDialog.show();
+        });*/
+        expiryEditText.setOnClickListener(v -> {
+            // カレンダーダイアログ用のレイアウトをインフレート
+            View calendarDialogView = getLayoutInflater().inflate(R.layout.calendar_dialog, null);
+
+            // レイアウトからCalendarViewを取得
+            CalendarView calendarView = calendarDialogView.findViewById(R.id.calendarView);
+
+            // カレンダーのセットアップ
+            SelectCalendar selectCalendar = SelectCalendar.getInstance();
+            selectCalendar.setupCalendar(calendarView);
+
+            // ダイアログの作成と表示
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+            builder.setTitle("賞味期限を選択")
+                    .setView(calendarDialogView)
+                    .setPositiveButton("OK", (dialog, which) -> {
+                        String selectedDate = selectCalendar.getSelectedDate();
+                        if (selectedDate != null) {
+                            expiryEditText.setText(selectedDate);
+                        }
+                    })
+                    .setNegativeButton("キャンセル", (dialog, which) -> dialog.dismiss())
+                    .show();
         });
 
         // 保存ボタンの設定
