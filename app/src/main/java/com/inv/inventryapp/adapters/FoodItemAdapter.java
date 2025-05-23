@@ -35,6 +35,7 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
     private List<MainItemJoin> mainItemJoins;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd", Locale.JAPAN);
     private AdapterView.OnItemClickListener onItemClickListener;
+    private AdapterView.OnItemLongClickListener onItemLongClickListener;
 
     private long itemId = 0;
 
@@ -106,10 +107,19 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
             holder.locationTextView.setVisibility(View.GONE);
         }
 
+        // クリックリスナー（短押し）
         holder.itemView.setOnClickListener(v -> {
             if (onItemClickListener != null) {
                 onItemClickListener.onItemClick(null, v, position, item.getId());
             }
+        });
+
+        // 長押しリスナーを追加
+        holder.itemView.setOnLongClickListener(v -> {
+            if (onItemLongClickListener != null) {
+                return onItemLongClickListener.onItemLongClick(null, v, position, item.getId());
+            }
+            return false;
         });
     }
 
@@ -124,6 +134,10 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
 
     public MainItemJoin getItem(int position) {
         return mainItemJoins.get(position);
+    }
+
+    public void setOnItemLongClickListener(AdapterView.OnItemLongClickListener listener) {
+        this.onItemLongClickListener = listener;
     }
 
     static class FoodItemViewHolder extends RecyclerView.ViewHolder {

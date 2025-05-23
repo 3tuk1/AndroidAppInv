@@ -71,7 +71,8 @@ public class BarcodeScannerActivity extends BaseCameraActivity {
 
                                         if (db.barcodeDao().existsBarcodeValue(barcodeValue)) {
                                             MainItemJoin selectedItem = db.barcodeDao().getItemByBarcodeValue(barcodeValue);
-                                            bundle.putInt("itemId", selectedItem.mainItem.getId());
+                                            // なぜか+1しないとIDの整合性が取れない
+                                            bundle.putInt("itemId", selectedItem.mainItem.getId()+1);
                                         } else {
                                             bundle.putString("barcode", barcodeValue);
                                             bundle.putBoolean("isNewItem", true);

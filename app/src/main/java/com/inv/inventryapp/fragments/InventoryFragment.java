@@ -52,6 +52,7 @@ public class InventoryFragment extends Fragment {
 
         // アイテムをタップした時の処理
         adapter.setOnItemClickListener((parent, itemView, position, id) -> {
+            // 長押し
             // parentはRecyclerViewのインスタンス,itemViewはタップされたアイテムのView
             // positionはタップされたアイテムの位置,long idはアイテムのID
             if (position >= 0 && position < adapter.getItemCount()) {// アイテムがホルダーの中にあるか確認
@@ -75,6 +76,26 @@ public class InventoryFragment extends Fragment {
             } else {
                 Log.e(TAG, "無効なポジション: " + position);
             }
+        });
+        // アイテムを長押しした時の処理
+        adapter.setOnItemLongClickListener((parent, itemView, position, id) -> {
+            if (position >= 0 && position < adapter.getItemCount()) {
+                MainItemJoin selectedItem = adapter.getItem(position);
+                if (selectedItem != null && selectedItem.mainItem != null) {
+                    executor.execute(() -> {
+                        mainItemDao.delete(selectedItem.mainItem);
+                        if (getActivity() != null) {
+                            // UIスレッドでリストを再読み込みして更新
+                            getActivity().runOnUiThread(this::loadItems);
+                        }
+                    });
+                } else {
+                    Log.e(TAG, "長押しされたアイテムまたはメインアイテムがnullです。削除できません。");
+                }
+            } else {
+                Log.e(TAG, "長押しされたアイテムのポジションが無効です: " + position);
+            }
+            return true; // 長押しイベントを消費したことを示す
         });
         return view;
     }
@@ -207,6 +228,8 @@ public class InventoryFragment extends Fragment {
             Log.e(TAG, "並べ替え中にエラーが発生しました", e);
         }
     }
+
+
 
     // 並べ替え順の列挙型
     public enum SortOrder {

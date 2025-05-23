@@ -18,10 +18,12 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 
 public abstract class CalendarSetup {
+    CalendarView calendarView;
 
 
     // ヘルパーメソッドとして実装
     public void setupCalendar(CalendarView calendarView,View view) {
+        this.calendarView = calendarView;
         // 開始日と終了日を設定
         TextView monthTextView = view.findViewById(R.id.monthTextView);
         YearMonth currentMonth = YearMonth.now();
@@ -34,42 +36,7 @@ public abstract class CalendarSetup {
         if(monthTextView != null) {
             monthTextView.setText(currentMonth.toString());
         }
-        calendarView.setDayBinder(new MonthDayBinder<DayViewContainer>() {
-            @NonNull
-            @Override
-            public DayViewContainer create(@NonNull View view) {
-                return new DayViewContainer(view);
-            }
-
-            @Override
-            public void bind(@NonNull DayViewContainer container, CalendarDay day) {
-                TextView textView = container.textView;
-                textView.setText(String.valueOf(day.getDate().getDayOfMonth()));
-
-                if (day.getPosition() == DayPosition.MonthDate) {
-                    textView.setVisibility(View.VISIBLE);
-
-                    // 現在の日付をハイライト
-                    if (day.getDate().equals(LocalDate.now())) {
-                        textView.setTextColor(Color.RED);
-                    } else {
-                        textView.setTextColor(Color.BLACK);
-                    }
-                } else {
-                    textView.setVisibility(View.INVISIBLE);
-                }
-
-                container.getView().setOnClickListener(v -> {
-                    // 日付クリック時の処理
-                    if (day.getPosition() == DayPosition.MonthDate) {
-                        // 選択した日付の処理
-                        LocalDate selectedDate = day.getDate();
-                        onDateSelected(selectedDate);
-                    }
-                });
-            }
-        });
-
+        selectBind();
         // 月が変わったときのリスナー
         calendarView.setMonthScrollListener(month -> {
             // 月が変わったときの処理
@@ -82,6 +49,8 @@ public abstract class CalendarSetup {
             return null;
         });
     }
+
+    abstract void selectBind();
 
     // 日付をクリックしたときの処理
     public abstract void onDateSelected(LocalDate date);

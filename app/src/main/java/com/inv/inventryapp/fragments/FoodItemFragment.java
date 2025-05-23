@@ -1,13 +1,11 @@
 package com.inv.inventryapp.fragments;
 
 import android.app.Activity;
-import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,13 +21,12 @@ import com.inv.inventryapp.R;
 import com.inv.inventryapp.camera.SimpleCameraActivity;
 import com.inv.inventryapp.models.*;
 import com.inv.inventryapp.room.*;
-import com.inv.inventryapp.utility.CalendarSetup;
+import com.inv.inventryapp.utility.ManageCalendar;
 import com.inv.inventryapp.utility.SelectCalendar;
 import com.kizitonwose.calendar.view.CalendarView;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -159,15 +156,15 @@ public class FoodItemFragment extends Fragment {
             // レイアウトからCalendarViewを取得
             CalendarView calendarView = calendarDialogView.findViewById(R.id.calendarView);
 
-            // カレンダーのセットアップ
-            SelectCalendar selectCalendar = SelectCalendar.getInstance();
-            selectCalendar.setupCalendar(calendarView,calendarDialogView);
+            // カレンダーのセットアップ（SelectCalendarの代わりにManageCalendarを使用）
+            SelectCalendar SC = SelectCalendar.getInstance();
+            SC.setupCalendar(calendarView, calendarDialogView);
 
             // ダイアログの作成と表示
             AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
             builder.setView(calendarDialogView)
                     .setPositiveButton("OK", (dialog, which) -> {
-                        String selectedDate = selectCalendar.getSelectedDate();
+                        String selectedDate = SC.getSelectedDate();
                         if (selectedDate != null) {
                             expiryEditText.setText(selectedDate);
                         }
