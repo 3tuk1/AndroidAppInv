@@ -4,10 +4,7 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-import com.inv.inventryapp.models.Barcode;
-import com.inv.inventryapp.models.ItemImage;
-import com.inv.inventryapp.models.Location;
-import com.inv.inventryapp.models.MainItem;
+import com.inv.inventryapp.models.*;
 
 @Database(
         entities = {
@@ -16,7 +13,7 @@ import com.inv.inventryapp.models.MainItem;
                 Location.class,
                 Barcode.class  // バーコードエンティティを追加
         },
-        version = 4,  // バージョンを上げる
+        version = 5,  // バージョンを上げる
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -37,5 +34,30 @@ public abstract class AppDatabase extends RoomDatabase {
                     .build();
         }
         return instance;
+    }
+
+    public void DeleateId(int id) {
+        // データベースから特定のIDを持つアイテムを削除するメソッド
+        MainItemJoin mainItem = mainItemDao().getMainItemWithImagesAndLocationById(id);
+        if (mainItem != null) {
+            // 画像が存在する場合は削除
+            if (mainItem.images != null) {
+                for (ItemImage image : mainItem.images) {
+                    itemImageDao().delete(image);
+                }
+            }
+            // バーコードが存在する場合は削除
+            if (mainItem.barcodes != null) {
+                for (Barcode barcode : mainItem.barcodes) {
+                    barcodeDao().delete(barcode);
+                }
+            }
+            // ロケーションが存在する場合は削除
+            if (mainItem.location != null) {
+                locationDao().delete(mainItem.location);
+            }
+            // 最後にメインアイテムを削除
+            mainItemDao().delete(mainItem.mainItem);
+        }
     }
 }

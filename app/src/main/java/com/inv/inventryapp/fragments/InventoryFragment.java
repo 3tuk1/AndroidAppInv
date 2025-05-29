@@ -83,7 +83,7 @@ public class InventoryFragment extends Fragment {
                 MainItemJoin selectedItem = adapter.getItem(position);
                 if (selectedItem != null && selectedItem.mainItem != null) {
                     executor.execute(() -> {
-                        mainItemDao.delete(selectedItem.mainItem);
+                        db.DeleateId(selectedItem.mainItem.getId());
                         if (getActivity() != null) {
                             // UIスレッドでリストを再読み込みして更新
                             getActivity().runOnUiThread(this::loadItems);
