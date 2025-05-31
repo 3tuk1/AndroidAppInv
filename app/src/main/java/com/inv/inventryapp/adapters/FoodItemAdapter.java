@@ -16,6 +16,7 @@ import com.inv.inventryapp.models.Category;
 import com.inv.inventryapp.models.ItemImage;
 import com.inv.inventryapp.models.MainItem;
 import com.inv.inventryapp.models.MainItemJoin;
+import com.inv.inventryapp.utility.ConvertDate;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -65,6 +66,7 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
         return new FoodItemViewHolder(itemView);
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull FoodItemViewHolder holder, int position) {
         MainItemJoin itemJoin = mainItemJoins.get(position);
@@ -107,14 +109,14 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
         try {
             // LocalDate をフォーマット
             if (item.getExpirationDate() != null) {
-                String formattedDate = item.getExpirationDate().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
-                holder.expiryDateTextView.setText("賞味期限: " + formattedDate);
+                String formattedDate = ConvertDate.localDateToString(item.getExpirationDate());
+                holder.expiryDateTextView.setText("期限: " + formattedDate);
             } else {
-                holder.expiryDateTextView.setText("賞味期限: 不明");
+                holder.expiryDateTextView.setText("期限: 不明");
             }
         } catch (Exception e) {
             // 変換に失敗した場合
-            holder.expiryDateTextView.setText("賞味期限: 不明");
+            holder.expiryDateTextView.setText("期限: 不明");
         }
 
         holder.quantityTextView.setText("数量: " + item.getQuantity());

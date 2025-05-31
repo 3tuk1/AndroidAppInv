@@ -37,4 +37,7 @@ public interface MainItemDao {
      @Transaction
      @Query("SELECT * FROM main_items WHERE quantity > 0")
      List<MainItemJoin> getMainItemWithImagesAndLocationOnlyPositive();
+
+     @Query("SELECT * FROM main_items WHERE id = :itemId")
+     MainItem findItemById(int itemId);
 }

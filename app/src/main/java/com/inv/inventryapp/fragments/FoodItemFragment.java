@@ -1,4 +1,4 @@
-package com.inv.inventryapp.fragments;
+package com.inv.inventryapp.fragments;// FoodItemFragment.java
 
 import android.app.Activity;
 import android.content.Intent;
@@ -21,18 +21,20 @@ import com.inv.inventryapp.R;
 import com.inv.inventryapp.camera.SimpleCameraActivity;
 import com.inv.inventryapp.models.*;
 import com.inv.inventryapp.room.*;
-import com.inv.inventryapp.utility.ManageCalendar;
+import com.inv.inventryapp.utility.ConvertDate;
 import com.inv.inventryapp.utility.SelectCalendar;
 import com.kizitonwose.calendar.view.CalendarView;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.inv.inventryapp.room.Converters.compressImage;
 
@@ -102,6 +104,7 @@ public class FoodItemFragment extends Fragment {
             for (Category c : categoryList) {
                 categoryNames.add(c.name);
             }
+            if (getActivity() == null) return; // Activityがnullの場合は処理を中断
             getActivity().runOnUiThread(() -> {
                 ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
                         requireContext(),
@@ -110,30 +113,10 @@ public class FoodItemFragment extends Fragment {
                 );
                 spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 categorySpinner.setAdapter(spinnerAdapter);
-                // 既存データがある場合は選択状態を復元
-                if (getArguments() != null) {
-                    int itemId = getArguments().getInt("itemId", -1);
-                    if (itemId != -1) {
-                        executor.execute(() -> {
-                            MainItemJoin allJoin = mainItemDao.getMainItemWithImagesAndLocationById(itemId);
-                            if (allJoin != null && getActivity() != null) {
-                                MainItem item = allJoin.mainItem;
-                                getActivity().runOnUiThread(() -> {
-                                    int categoryPosition = 0;
-                                    for (int i = 0; i < categoryList.size(); i++) {
-                                        if (categoryList.get(i).id == item.getCategoryId()) {
-                                            categoryPosition = i;
-                                            break;
-                                        }
-                                    }
-                                    categorySpinner.setSelection(categoryPosition);
-                                });
-                            }
-                        });
-                    }
-                }
+                // 既存データがある場合は選択状態を復元 (この部分は後続のデータ読み込みロジックでカバーされる)
             });
         });
+
 
         categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -148,61 +131,145 @@ public class FoodItemFragment extends Fragment {
             }
         });
 
-        // 引数からIDを取得し、アイテム情報を取得
-        if (getArguments() != null) { // バンドルがnullでない場合
-            // 引数からアイテムIDを取得 何もない状態を-1と設定する
-            int itemId = getArguments().getInt("itemId", -1);
-            if (itemId != -1) {
-                // アイテム情報を取得
-                executor.execute(() -> {
-                    MainItemJoin allJoin = mainItemDao.getMainItemWithImagesAndLocationById(itemId);
-                    if (allJoin != null && getActivity() != null) {
-                        MainItem item = allJoin.mainItem;
-                        getActivity().runOnUiThread(() -> {
-                            nameEditText.setText(item.getName());
-                            quantityEditText.setText(String.valueOf(item.getQuantity()));
-                            if (item.getExpirationDate() != null) {
-                                expiryEditText.setText(item.getExpirationDate().toString());
+        // 引数からIDとバーコードを取得し、アイテム情報を取得
+        if (getArguments() != null) {
+            int bundleItemId = getArguments().getInt("itemId", -1);
+            boolean isNewItemFromBundle = getArguments().getBoolean("isNewItem", false);
+            String receivedBarcode = getArguments().getString("barcode", null); // ★修正: バーコードを常に受け取る
+
+            Log.d("FoodItemFragment", "バンドルから取得: itemId=" + bundleItemId + ", isNewItem=" + isNewItemFromBundle + ", barcode=" + receivedBarcode);
+
+            executor.execute(() -> {
+                MainItemJoin itemToDisplay = null;
+                int finalItemIdToLoad = bundleItemId; // 初期値としてバンドルのitemIdを使用
+
+                // 1. 受け取ったバーコードでアイテムを検索
+                if (receivedBarcode != null && !receivedBarcode.isEmpty()) {
+                    itemToDisplay = BarcodeDao.getItemByBarcodeValue(receivedBarcode);
+                    if (itemToDisplay != null && itemToDisplay.mainItem != null) {
+                        finalItemIdToLoad = itemToDisplay.mainItem.getId(); // バーコードから得たIDを優先
+                        this.barcode = receivedBarcode; // Fragmentのメンバー変数にセット
+                        Log.d("FoodItemFragment", "バーコード '" + receivedBarcode + "' からアイテム取得: ID=" + finalItemIdToLoad + ", 名前=" + itemToDisplay.mainItem.getName());
+                    } else {
+                        Log.d("FoodItemFragment", "バーコード '" + receivedBarcode + "' に紐づくアイテムなし。");
+                        // 新規アイテムの場合、このバーコードを保持
+                        if (isNewItemFromBundle) {
+                            this.barcode = receivedBarcode;
+                        }
+                    }
+                }
+
+                // 2. バーコード検索で見つからず、かつバンドルに有効な itemId があり、新規アイテム指定でない場合にそれで検索
+                if (itemToDisplay == null && finalItemIdToLoad != -1 && !isNewItemFromBundle) {
+                    itemToDisplay = mainItemDao.getMainItemWithImagesAndLocationById(finalItemIdToLoad);
+                    if (itemToDisplay != null && itemToDisplay.mainItem != null) {
+                        Log.d("FoodItemFragment", "バンドルID " + finalItemIdToLoad + " からアイテム取得: 名前=" + itemToDisplay.mainItem.getName());
+                        // このアイテムに紐づくバーコードがあれば、それも設定
+                        if (this.barcode == null) { // バーコードがまだ設定されていなければ
+                            Barcode existingBarcodeForLoadedItem = BarcodeDao.getBarcodesForItem(itemToDisplay.mainItem.getId());
+                            if (existingBarcodeForLoadedItem != null) {
+                                this.barcode = existingBarcodeForLoadedItem.getBarcodeValue();
+                                Log.d("FoodItemFragment", "ロードしたアイテム ID " + itemToDisplay.mainItem.getId() + " からバーコード取得: " + this.barcode);
                             }
+                        }
+                    } else {
+                        Log.d("FoodItemFragment", "バンドルID " + finalItemIdToLoad + " のアイテムは見つかりませんでした。");
+                    }
+                }
 
-                            // 場所情報を設定
-                            if (allJoin.location != null) {
-                                locationEditText.setText(allJoin.location.getLocation());
-                            }
 
-                            // 画像の設定
-                            if (allJoin.images != null && !allJoin.images.isEmpty()) {
-                                ItemImage firstImage = allJoin.images.get(0);
-                                imagePath = firstImage.getImagePath();
+                // UI更新処理
+                if (itemToDisplay != null && itemToDisplay.mainItem != null && getActivity() != null) {
+                    final MainItem item = itemToDisplay.mainItem;
+                    final MainItemJoin finalItemToDisplay = itemToDisplay; // effectively final for lambda
 
-                                if (imagePath != null && !imagePath.isEmpty()) {
-                                    File imgFile = new File(imagePath);
-                                    if (imgFile.exists()) {
-                                        Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
-                                        bitmap = compressImage(bitmap);
-                                        foodImageView.setImageBitmap(bitmap);
-                                    } else {
-                                        foodImageView.setImageResource(R.drawable.default_food_image);
-                                    }
+                    getActivity().runOnUiThread(() -> {
+                        nameEditText.setText(item.getName());
+                        quantityEditText.setText(String.valueOf(item.getQuantity()));
+                        if (item.getExpirationDate() != null) {
+                            expiryEditText.setText(ConvertDate.localDateToString(item.getExpirationDate()));
+                        }
+
+                        // 場所情報を設定
+                        if (finalItemToDisplay.location != null) {
+                            locationEditText.setText(finalItemToDisplay.location.getLocation());
+                        }
+
+                        // 画像の設定
+                        if (finalItemToDisplay.images != null && !finalItemToDisplay.images.isEmpty()) {
+                            ItemImage firstImage = finalItemToDisplay.images.get(0);
+                            imagePath = firstImage.getImagePath();
+
+                            if (imagePath != null && !imagePath.isEmpty()) {
+                                File imgFile = new File(imagePath);
+                                if (imgFile.exists()) {
+                                    Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+                                    bitmap = compressImage(bitmap);
+                                    foodImageView.setImageBitmap(bitmap);
+                                } else {
+                                    foodImageView.setImageResource(R.drawable.default_food_image);
                                 }
                             } else {
                                 foodImageView.setImageResource(R.drawable.default_food_image);
                             }
+                        } else {
+                            foodImageView.setImageResource(R.drawable.default_food_image);
+                        }
 
-                            // カテゴリーの設定
-                            int categoryPosition = 0;
-                            for (int i = 0; i < categoryList.size(); i++) {
-                                if (categoryList.get(i).id == item.getCategoryId()) {
-                                    categoryPosition = i;
-                                    break;
-                                }
+                        // カテゴリーの設定
+                        int categoryPosition = 0;
+                        for (int i = 0; i < categoryList.size(); i++) {
+                            if (categoryList.get(i).id == item.getCategoryId()) {
+                                categoryPosition = i;
+                                break;
                             }
-                            categorySpinner.setSelection(categoryPosition);
+                        }
+                        categorySpinner.setSelection(categoryPosition);
+                    });
+                } else if (isNewItemFromBundle && this.barcode != null) {
+                    // 新規アイテムとしてUIを初期化 (バーコードは保持)
+                    Log.d("FoodItemFragment", "新規アイテムとしてUIを初期化。バーコード: " + this.barcode);
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            nameEditText.setText(""); // 名前をクリア
+                            quantityEditText.setText("1"); // 数量をデフォルトに
+                            expiryEditText.setText(""); // 賞味期限をクリア
+                            locationEditText.setText(""); // 場所をクリア
+                            foodImageView.setImageResource(R.drawable.default_food_image); // 画像をデフォルトに
+                            categorySpinner.setSelection(0); // カテゴリを先頭に (または「未分類」など適切なデフォルト)
                         });
                     }
+                } else {
+                    Log.w("FoodItemFragment", "表示するアイテム情報が見つかりませんでした。itemId: " + finalItemIdToLoad + ", barcode: " + this.barcode);
+                    // 必要であれば、新規登録画面としてUIを完全に初期化する処理をここに入れる
+                    if(getActivity() != null){
+                        getActivity().runOnUiThread(()-> {
+                            nameEditText.setText("");
+                            quantityEditText.setText("1");
+                            expiryEditText.setText("");
+                            locationEditText.setText("");
+                            foodImageView.setImageResource(R.drawable.default_food_image);
+                            if (!categoryList.isEmpty()) categorySpinner.setSelection(0);
+                        });
+                    }
+                }
+            });
+        } else {
+            // バンドルがnullの場合 (通常は手動入力フロー)、UIを初期状態にする
+            Log.d("FoodItemFragment", "バンドルがnullです。手動入力としてUIを初期化します。");
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(()-> {
+                    nameEditText.setText("");
+                    quantityEditText.setText("1");
+                    expiryEditText.setText("");
+                    locationEditText.setText("");
+                    foodImageView.setImageResource(R.drawable.default_food_image);
+                    if (!categoryList.isEmpty()) categorySpinner.setSelection(0);
                 });
             }
         }
+
+
         expiryEditText.setOnClickListener(v -> {
             // カレンダーダイアログ用のレイアウトをインフレート
             View calendarDialogView = getLayoutInflater().inflate(R.layout.calendar_dialog, null);
@@ -220,7 +287,7 @@ public class FoodItemFragment extends Fragment {
                     .setPositiveButton("OK", (dialog, which) -> {
                         java.time.LocalDate selectedDate = SC.getSelectedDate(); // String から java.time.LocalDate に変更
                         if (selectedDate != null) {
-                            expiryEditText.setText(selectedDate.toString()); // LocalDate を String に変換
+                            expiryEditText.setText(ConvertDate.localDateToString(selectedDate)); // LocalDate を String に変換
                         }
                     })
                     .setNegativeButton("キャンセル", (dialog, which) -> dialog.dismiss())
@@ -241,50 +308,82 @@ public class FoodItemFragment extends Fragment {
                 return;
             }
 
-            int quantity = Integer.parseInt(quantityStr);
+            int quantity;
+            try {
+                quantity = Integer.parseInt(quantityStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "数量には数値を入力してください", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if (quantity <= 0) {
                 Toast.makeText(getContext(), "数量は1以上を入力してください", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             // String を LocalDate に変換
-            java.time.LocalDate expiryDate = null;
-            if (!expiryDateStr.isEmpty()) {
-                try {
-                    expiryDate = java.time.LocalDate.parse(expiryDateStr);
-                } catch (java.time.format.DateTimeParseException e) {
-                    Toast.makeText(getContext(), "日付の形式が無効です。YYYY-MM-DD形式で入力してください。", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+
+            final java.time.LocalDate finalExpiryDate = ConvertDate.stringToLocalDate(expiryDateStr);
+            if (finalExpiryDate == null) {
+                Toast.makeText(getContext(), "賞味期限の形式が正しくありません", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            final java.time.LocalDate finalExpiryDate = expiryDate;
 
             executor.execute(() -> {
                 try {
                     MainItem mainItem;
-                    int itemId = -1;
+                    int currentItemId = -1; // 更新・新規作成対象のID
                     int oldQuantity = 0;
                     boolean isUpdate = false;
 
-                    // 更新または新規作成の処理
-                    if (getArguments() != null) {
-                        itemId = getArguments().getInt("itemId", -1);
-                        if(getArguments().getBoolean("isNewItem", false)) {
-                            barcode = getArguments().getString("barcode", null);
+                    // 更新か新規作成かを判断
+                    // 1. バーコードがあり、それに紐づくアイテムが存在すれば、それを更新対象とする
+                    if (this.barcode != null && !this.barcode.isEmpty()) {
+                        MainItemJoin itemFromBarcode = BarcodeDao.getItemByBarcodeValue(this.barcode);
+                        if (itemFromBarcode != null && itemFromBarcode.mainItem != null) {
+                            currentItemId = itemFromBarcode.mainItem.getId();
+                            isUpdate = true;
+                            Log.d("FoodItemFragment_Save", "バーコードに紐づく既存アイテムを更新対象に: ID=" + currentItemId);
                         }
                     }
 
-                    if (itemId != -1) {
+                    // 2. バーコードで見つからない or バーコードがない場合で、バンドルから有効なIDが渡されていれば、それを更新対象とする
+                    // ただし、isNewItemFromBundleがtrueの場合は新規扱い
+                    if (!isUpdate && getArguments() != null) {
+                        int bundleItemIdForSave = getArguments().getInt("itemId", -1);
+                        boolean isNewItemFromBundleForSave = getArguments().getBoolean("isNewItem", false);
+                        if (bundleItemIdForSave != -1 && !isNewItemFromBundleForSave) {
+                            // 既存のアイテムか確認
+                            MainItem checkItem = mainItemDao.getMainItemById(bundleItemIdForSave);
+                            if(checkItem != null) {
+                                currentItemId = bundleItemIdForSave;
+                                isUpdate = true;
+                                Log.d("FoodItemFragment_Save", "バンドルIDの既存アイテムを更新対象に: ID=" + currentItemId);
+                            }
+                        }
+                    }
+
+
+                    if (isUpdate && currentItemId != -1) {
                         // 更新の場合
-                        mainItem = mainItemDao.getMainItemById(itemId);
+                        mainItem = mainItemDao.getMainItemById(currentItemId);
+                        if (mainItem == null) { // 念のためnullチェック
+                            Log.e("FoodItemFragment_Save", "更新対象のアイテムが見つかりません: ID=" + currentItemId);
+                            // この場合、新規作成にフォールバックするかエラーとするか検討
+                            // ここではエラーメッセージを表示して中断する例
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "更新対象アイテムが見つかりません", Toast.LENGTH_SHORT).show());
+                            }
+                            return;
+                        }
                         oldQuantity = mainItem.getQuantity();
                         mainItem.setName(name);
                         mainItem.setQuantity(quantity);
                         mainItem.setCategoryId(selectedCategoryId);
                         mainItem.setExpirationDate(finalExpiryDate);
                         mainItemDao.update(mainItem);
-                        isUpdate = true;
+                        Log.d("FoodItemFragment_Save", "アイテム更新: ID=" + currentItemId);
                     } else {
                         // 新規作成の場合
                         MainItem newItem = new MainItem(
@@ -294,37 +393,41 @@ public class FoodItemFragment extends Fragment {
                                 finalExpiryDate
                         );
                         long newItemId = mainItemDao.insert(newItem); // 保存してIDを取得
-                        itemId = (int) newItemId; // 新しいIDを設定
+                        currentItemId = (int) newItemId; // 新しいIDを設定
                         oldQuantity = 0;
+                        isUpdate = false; // 新規作成なのでisUpdateはfalse
+                        Log.d("FoodItemFragment_Save", "アイテム新規作成: ID=" + currentItemId);
                     }
 
                     // 数量変更履歴の記録
-                    if (isUpdate) {
+                    if (isUpdate) { // 更新の場合のみ旧数量と比較
                         if (oldQuantity != quantity) {
                             String type = (quantity > oldQuantity) ? "input" : "output";
                             int diff = Math.abs(quantity - oldQuantity);
-                            String date = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
-                            History history = new History(itemId, diff, type, date);
+                            LocalDate date = LocalDate.now();
+                            // outputの場合の理由は "消費" 以外も考慮できる（例: 数量修正など）
+                            String reason = (type.equals("output")) ? "消費" : "追加";
+                            History history = new History(currentItemId, diff, type, date, reason);
                             historyDao.insert(history);
                         }
-                    } else {
-                        // 新規作成時はinputとして記録
-                        String date = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
-                        History history = new History(itemId, quantity, "input", date);
+                    } else { // 新規作成時はinputとして記録
+                        LocalDate date = LocalDate.now();
+                        History history = new History(currentItemId, quantity, "input", date, "新規登録");
                         historyDao.insert(history);
                     }
 
-                    // 場所情報の保存
-                    final int finalItemId = itemId;
+
+                    //場所情報の保存
+                    final int finalCurrentItemId = currentItemId; // Effectively final for lambda
                     if (!locationStr.isEmpty()) {
-                        Location existingLocation = locationDao.getLocationByItemId(finalItemId);
+                        Location existingLocation = locationDao.getLocationByItemId(finalCurrentItemId);
 
                         if (existingLocation != null) {
                             existingLocation.setLocation(locationStr);
                             locationDao.update(existingLocation);
                         } else {
                             Location newLocation = new Location(
-                                    finalItemId,
+                                    finalCurrentItemId,
                                     locationStr
                             );
                             locationDao.insert(newLocation);
@@ -333,56 +436,61 @@ public class FoodItemFragment extends Fragment {
 
                     // 画像の保存
                     if (imagePath != null && !imagePath.isEmpty()) {
-                        // 既存の画像を確認
-                        ItemImage existingImage = null;
-                        MainItemJoin itemWithImages = itemImageDao.getItemWithItemImageById(finalItemId);
-
-                        if (itemWithImages != null && itemWithImages.images != null && !itemWithImages.images.isEmpty()) {
-                            existingImage = itemWithImages.images.get(0);
-                        }
+                        ItemImage existingImage = itemImageDao.getImageByItemId(finalCurrentItemId); // 単一の画像を取得
 
                         if (existingImage != null) {
-                            // 既存の画像を更新
                             if (!existingImage.getImagePath().equals(imagePath)) {
                                 existingImage.setImagePath(imagePath);
                                 existingImage.setTimestamp(System.currentTimeMillis());
                                 itemImageDao.update(existingImage);
                             }
                         } else {
-                            // 新しい画像を追加
                             ItemImage newImage = new ItemImage(
-                                    finalItemId,
+                                    finalCurrentItemId,
                                     imagePath
                             );
                             itemImageDao.insert(newImage);
                         }
                     }
-                    if(barcode != null && !barcode.isEmpty()) {
-
-                        // バーコード情報の保存
-                        Barcode existingBarcode = BarcodeDao.getBarcodesForItem(finalItemId);
+                    // バーコード情報の保存
+                    if(this.barcode != null && !this.barcode.isEmpty()) {
+                        Barcode existingBarcode = BarcodeDao.getBarcodesForItem(finalCurrentItemId); // 外部キーで検索
                         if (existingBarcode != null) {
-                            existingBarcode.setBarcodeValue(barcode);
-                            BarcodeDao.update(existingBarcode);
+                            if(!existingBarcode.getBarcodeValue().equals(this.barcode)){ // バーコード値が異なる場合のみ更新
+                                existingBarcode.setBarcodeValue(this.barcode);
+                                BarcodeDao.update(existingBarcode);
+                                Log.d("FoodItemFragment_Save", "バーコード更新: ItemID=" + finalCurrentItemId + ", Value=" + this.barcode);
+                            }
                         } else {
                             Barcode newBarcode = new Barcode(
-                                    finalItemId,
-                                    barcode
+                                    finalCurrentItemId,
+                                    this.barcode
                             );
                             BarcodeDao.insert(newBarcode);
+                            Log.d("FoodItemFragment_Save", "バーコード新規登録: ItemID=" + finalCurrentItemId + ", Value=" + this.barcode);
                         }
-
+                    } else {
+                        // バーコードが入力されていない場合、もし既存のバーコードがあれば削除する（オプション）
+                        // Barcode existingBarcode = BarcodeDao.getBarcodesForItem(finalCurrentItemId);
+                        // if (existingBarcode != null) {
+                        //     BarcodeDao.delete(existingBarcode);
+                        // }
                     }
 
-                    requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(getContext(), "保存しました", Toast.LENGTH_SHORT).show();
-                        requireActivity().getSupportFragmentManager().popBackStack();
-                    });
+
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "保存しました", Toast.LENGTH_SHORT).show();
+                            if (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                                getActivity().getSupportFragmentManager().popBackStack();
+                            }
+                        });
+                    }
                 }  catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e("FoodItemFragment_Save", "保存処理中にエラー", e);
                     String errorMsg = (e.getMessage() != null) ? e.getMessage() : "不明なエラー";
-                    if (getContext() != null && requireActivity() != null) {
-                        requireActivity().runOnUiThread(() -> {
+                    if (getContext() != null && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "保存に失敗しました: " + errorMsg, Toast.LENGTH_SHORT).show();
                         });
                     }
@@ -435,8 +543,9 @@ public class FoodItemFragment extends Fragment {
                             if (photoUriString != null) {
                                 Uri photoUri = Uri.parse(photoUriString);
                                 try {
-                                    File photoFile = new File(photoUri.getPath());
-                                    imagePath = photoFile.getAbsolutePath();
+                                    // File photoFile = new File(photoUri.getPath()); // URIのパスは直接ファイルパスではない場合がある
+                                    // URIから画像をコピーして保存する方が確実
+                                    imagePath = saveImageFromUri(photoUri); // ★修正: URIから安全にパスを取得・保存
 
                                     // 画像を表示
                                     Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
@@ -484,8 +593,9 @@ public class FoodItemFragment extends Fragment {
 
     // URIから画像を保存してパスを返す
     private String saveImageFromUri(Uri uri) throws IOException {
+        if (getContext() == null) throw new IOException("Context is null"); // Contextチェック
         // アプリ専用ディレクトリに画像を保存
-        File photoDir = new File(requireContext().getExternalFilesDir(null), "Images");
+        File photoDir = new File(requireContext().getExternalFilesDir(null), "Images"); //
         if (!photoDir.exists()) {
             photoDir.mkdirs();
         }
@@ -497,6 +607,8 @@ public class FoodItemFragment extends Fragment {
         try (InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
              FileOutputStream outputStream = new FileOutputStream(outputFile)) {
 
+            if (inputStream == null) throw new IOException("Unable to open InputStream for URI: " + uri); // InputStreamチェック
+
             byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -507,4 +619,3 @@ public class FoodItemFragment extends Fragment {
         return outputFile.getAbsolutePath();
     }
 }
-

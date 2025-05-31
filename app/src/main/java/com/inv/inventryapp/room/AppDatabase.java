@@ -5,8 +5,11 @@ import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.TypeConverters;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import com.inv.inventryapp.models.*;
+
+import java.time.LocalDate;
 import java.util.concurrent.Executors;
 
 @Database(
@@ -17,15 +20,15 @@ import java.util.concurrent.Executors;
                 Barcode.class,  // バーコードエンティティを追加
                 Category.class,  // カテゴリエンティティを追加
                 HiddenItem.class,  // 非表示管理エンティティを追加
-                History.class  // 履歴エンティティを追加
+                History.class,  // 履歴エンティティを追加
+                ItemAnalyticsData.class // 解析データエンティティを追加
         },
-        version = 13,  // バージョンを上げる
+        version = 17,  // バージョンを16に上げる
         exportSchema = false
 )
+@TypeConverters(DateConverter.class)
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase instance;
-
-
 
     public abstract MainItemDao mainItemDao();
     public abstract ItemImageDao itemImageDao();
@@ -34,6 +37,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract CategoryDao categoryDao();  // カテゴリーDAOのメソッドを追加
     public abstract HiddenItemDao hiddenItemDao();  // 非表示DAOのメソッドを追加
     public abstract HistoryDao historyDao();  // 履歴DAOのメソッドを追加
+    public abstract ItemAnalyticsDataDao itemAnalyticsDataDao(); // 解析データDAOのメソッドを追加
 
     public static synchronized AppDatabase getInstance(Context context) {
         if (instance == null) {
@@ -79,8 +83,14 @@ public abstract class AppDatabase extends RoomDatabase {
             hiddenItemDao().insert(hiddenItem);
             // 最後にメインアイテムの数量を0にする
             mainItemDao().setQuantityZero(mainItem.mainItem.getId());
+            historyDao().insert(new History(
+                    mainItem.mainItem.getId(),
+                    0,
+                    "delete", // typeは "delete" のまま
+                    LocalDate.now(),
+                    "廃棄" // consumptionReason に "廃棄" を指定
+            ));
         }
     }
 }
-
 

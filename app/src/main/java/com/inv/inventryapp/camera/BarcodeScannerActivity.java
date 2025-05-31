@@ -68,12 +68,25 @@ public class BarcodeScannerActivity extends BaseCameraActivity {
                                     databaseExecutor.execute(() -> {
                                         AppDatabase db = AppDatabase.getInstance(getApplicationContext());
                                         final Bundle bundle = new Bundle();
+                                        bundle.putString("barcode", barcodeValue); // ★常にバーコードをバンドルに追加
 
                                         if (db.barcodeDao().existsBarcodeValue(barcodeValue)) {
                                             MainItemJoin selectedItem = db.barcodeDao().getItemByBarcodeValue(barcodeValue);
-                                            bundle.putInt("itemId", selectedItem.mainItem.getId());
+                                            if (selectedItem != null && selectedItem.mainItem != null) {
+                                                int itemId = selectedItem.mainItem.getId();
+                                                android.util.Log.d("BarcodeScanner", "バーコード: " + barcodeValue +
+                                                        ", アイテムID: " + itemId +
+                                                        ", アイテム名: " + selectedItem.mainItem.getName());
+                                                bundle.putInt("itemId", itemId);
+                                                bundle.putBoolean("isNewItem", false);
+                                            } else {
+                                                android.util.Log.e("BarcodeScanner", "MainItem not found for barcode: " + barcodeValue);
+                                                // bundle.putString("barcode", barcodeValue); // ★既に上部で追加済み
+                                                bundle.putBoolean("isNewItem", true);
+                                            }
                                         } else {
-                                            bundle.putString("barcode", barcodeValue);
+                                            android.util.Log.d("BarcodeScanner", "新規バーコード: " + barcodeValue);
+                                            // bundle.putString("barcode", barcodeValue); // ★既に上部で追加済み
                                             bundle.putBoolean("isNewItem", true);
                                         }
                                         setResult(BarcodeScannerActivity.RESULT_OK, new Intent().putExtras(bundle));
@@ -94,3 +107,4 @@ public class BarcodeScannerActivity extends BaseCameraActivity {
                 .addOnCompleteListener(task -> imageProxy.close());
     }
 }
+
