@@ -3,10 +3,12 @@ package com.inv.inventryapp.models;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 @Entity(
         tableName = "item_images",
+        indices = {@Index(value = "item_id")},
         foreignKeys = @ForeignKey(
                 entity = MainItem.class,
                 parentColumns = "id",
@@ -48,3 +50,4 @@ public class ItemImage {
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 }
+

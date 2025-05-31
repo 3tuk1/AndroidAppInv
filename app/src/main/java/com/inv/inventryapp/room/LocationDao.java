@@ -6,6 +6,7 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
 import androidx.room.Update;
+import androidx.room.RewriteQueriesToDropUnusedColumns;
 
 import com.inv.inventryapp.models.Location;
 import com.inv.inventryapp.models.MainItemJoin;
@@ -35,12 +36,15 @@ public interface LocationDao {
     Location getLocationByItemId(int itemId);
 
     // MainItemとLocationを結合するクエリ
+    @RewriteQueriesToDropUnusedColumns
     @Transaction
     @Query("SELECT m.*, l.* FROM main_items m LEFT JOIN locations l ON m.id = l.item_id")
     List<MainItemJoin> getItemsWithLocations();
 
     // 特定のアイテムとその場所情報を取得
+    @RewriteQueriesToDropUnusedColumns
     @Transaction
     @Query("SELECT m.*, l.* FROM main_items m LEFT JOIN locations l ON m.id = l.item_id WHERE m.id = :itemId")
     MainItemJoin getItemWithLocationById(int itemId);
 }
+

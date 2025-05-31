@@ -1,12 +1,10 @@
 package com.inv.inventryapp.models;
 
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.PrimaryKey;
+import androidx.room.*;
 
 @Entity(
         tableName = "locations",
+        indices = {@Index(value = "item_id")},
         foreignKeys = @ForeignKey(
                 entity = MainItem.class,
                 parentColumns = "id",

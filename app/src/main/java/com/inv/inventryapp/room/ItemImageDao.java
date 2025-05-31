@@ -29,15 +29,16 @@ public interface ItemImageDao {
     ItemImage getImageByItemId(int itemId);
 
     // MainItemとitem_imageを結合するクエリ
+    @RewriteQueriesToDropUnusedColumns
     @Transaction
     @Query("SELECT m.*, i.* FROM main_items m LEFT JOIN item_images i ON m.id = i.item_id")
     List<MainItemJoin> getItemsWithItemImages();
 
     // 特定のアイテムとその場所情報を取得
+    @RewriteQueriesToDropUnusedColumns
     @Transaction
     @Query("SELECT m.*, i.* FROM main_items m LEFT JOIN item_images i ON m.id = i.item_id WHERE m.id = :itemId")
     MainItemJoin getItemWithItemImageById(int itemId);
 
-
-
 }
+

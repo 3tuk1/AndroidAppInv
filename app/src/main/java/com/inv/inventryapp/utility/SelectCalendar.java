@@ -88,9 +88,9 @@ public class SelectCalendar extends ManageCalendar {
 
 
 
-    public String getSelectedDate() {
+    public LocalDate getSelectedDate() {
         if (currentSelectedDate != null) {
-            return currentSelectedDate.toString();
+            return currentSelectedDate;
         }
         return null;
     }

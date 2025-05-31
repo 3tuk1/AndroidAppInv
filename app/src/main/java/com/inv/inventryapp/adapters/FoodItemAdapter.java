@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.inv.inventryapp.R;
+import com.inv.inventryapp.models.Category;
 import com.inv.inventryapp.models.ItemImage;
 import com.inv.inventryapp.models.MainItem;
 import com.inv.inventryapp.models.MainItemJoin;
@@ -19,7 +20,10 @@ import com.inv.inventryapp.models.MainItemJoin;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,9 +42,13 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
     private AdapterView.OnItemLongClickListener onItemLongClickListener;
 
     private long itemId = 0;
+    private HashMap<Integer, String> categoryIdNameMap = new HashMap<>();
 
-    public FoodItemAdapter(List<MainItemJoin> mainItemJoins) {
+    public FoodItemAdapter(List<MainItemJoin> mainItemJoins, List<Category> categories) {
         this.mainItemJoins = mainItemJoins;
+        for (Category c : categories) {
+            categoryIdNameMap.put(c.id, c.name);
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -65,6 +73,15 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
         // メインアイテム情報を設定
         holder.nameTextView.setText(item.getName());
 
+        // カテゴリ名の表示
+        String categoryName = categoryIdNameMap.get(item.getCategoryId());
+        if (categoryName != null) {
+            holder.categoryTextView.setText("カテゴリ: " + categoryName);
+            holder.categoryTextView.setVisibility(View.VISIBLE);
+        } else {
+            holder.categoryTextView.setVisibility(View.GONE);
+        }
+
         // 画像を表示（結合データから）
         if (itemJoin.images != null && !itemJoin.images.isEmpty()) {
             ItemImage firstImage = itemJoin.images.get(0);
@@ -88,10 +105,13 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
 
         // 賞味期限をフォーマット
         try {
-            // String を Date に変換
-            Date expiryDate = dateFormat.parse(item.getExpirationDate());
-            String formattedDate = DateFormat.getDateInstance().format(expiryDate);
-            holder.expiryDateTextView.setText("賞味期限: " + formattedDate);
+            // LocalDate をフォーマット
+            if (item.getExpirationDate() != null) {
+                String formattedDate = item.getExpirationDate().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM));
+                holder.expiryDateTextView.setText("賞味期限: " + formattedDate);
+            } else {
+                holder.expiryDateTextView.setText("賞味期限: 不明");
+            }
         } catch (Exception e) {
             // 変換に失敗した場合
             holder.expiryDateTextView.setText("賞味期限: 不明");
@@ -146,6 +166,7 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
         TextView expiryDateTextView;
         TextView quantityTextView;
         TextView locationTextView;
+        TextView categoryTextView;
 
         public FoodItemViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -154,6 +175,8 @@ public class FoodItemAdapter extends RecyclerView.Adapter<FoodItemAdapter.FoodIt
             expiryDateTextView = itemView.findViewById(R.id.expiryDateTextView);
             quantityTextView = itemView.findViewById(R.id.quantityTextView);
             locationTextView = itemView.findViewById(R.id.locationTextView);
+            categoryTextView = itemView.findViewById(R.id.categoryTextView);
         }
     }
 }
+

@@ -6,6 +6,7 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Transaction;
 import androidx.room.Update;
+import androidx.room.RewriteQueriesToDropUnusedColumns;
 
 import com.inv.inventryapp.models.Barcode;
 import com.inv.inventryapp.models.MainItemJoin;
@@ -36,16 +37,19 @@ public interface BarcodeDao {
     Barcode getBarcodeByValue(String value);
 
     // MainItemとBarcodeを結合するクエリ
+    @RewriteQueriesToDropUnusedColumns
     @Transaction
     @Query("SELECT m.*, b.* FROM main_items m LEFT JOIN barcodes b ON m.id = b.item_id")
     List<MainItemJoin> getItemsWithBarcodes();
 
     // 特定のアイテムとそのバーコード情報を取得
+    @RewriteQueriesToDropUnusedColumns
     @Transaction
     @Query("SELECT m.*, b.* FROM main_items m LEFT JOIN barcodes b ON m.id = b.item_id WHERE m.id = :itemId")
     MainItemJoin getItemWithBarcodeById(int itemId);
 
     // バーコード値からアイテムとバーコード情報を取得
+    @RewriteQueriesToDropUnusedColumns
     @Transaction
     @Query("SELECT m.*, b.* FROM main_items m JOIN barcodes b ON m.id = b.item_id WHERE b.barcode_value = :barcodeValue")
     MainItemJoin getItemByBarcodeValue(String barcodeValue);
@@ -54,3 +58,4 @@ public interface BarcodeDao {
     @Query("SELECT EXISTS(SELECT 1 FROM barcodes WHERE barcode_value = :barcodeValue LIMIT 1)")
     boolean existsBarcodeValue(String barcodeValue);
 }
+

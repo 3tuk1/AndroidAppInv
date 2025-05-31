@@ -30,4 +30,11 @@ public interface MainItemDao {
      @Transaction
      @Query("SELECT * FROM main_items WHERE id = :id")
      MainItemJoin getMainItemWithImagesAndLocationById(int id);
+
+     @Query("UPDATE main_items SET quantity = 0 WHERE id = :id")
+     void setQuantityZero(int id);
+
+     @Transaction
+     @Query("SELECT * FROM main_items WHERE quantity > 0")
+     List<MainItemJoin> getMainItemWithImagesAndLocationOnlyPositive();
 }

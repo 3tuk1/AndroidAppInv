@@ -27,7 +27,9 @@ import com.kizitonwose.calendar.view.CalendarView;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -51,12 +53,16 @@ public class FoodItemFragment extends Fragment {
     private String imagePath; // 画像ファイルのパス
     private String barcode; // バーコードの変数
 
+    private int selectedCategoryId = -1; // 選択中のカテゴリID
+    private List<Category> categoryList = new ArrayList<>();
+
     private ActivityResultLauncher<Intent> cameraLauncher;
 
     private MainItemDao mainItemDao;
     private ItemImageDao itemImageDao;
     private LocationDao locationDao;
     private BarcodeDao BarcodeDao; // バーコードDAOの変数
+    private HistoryDao historyDao; // 履歴DAOの変数
     private Executor executor = Executors.newSingleThreadExecutor();
 
     @Nullable
@@ -76,21 +82,71 @@ public class FoodItemFragment extends Fragment {
         locationEditText = view.findViewById(R.id.locationEditText); // 場所入力欄
         foodImageView = view.findViewById(R.id.foodImageView);
 
-        // Spinnerの設定
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                requireContext(),
-                R.array.categories,
-                android.R.layout.simple_spinner_item
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        categorySpinner.setAdapter(adapter);
-
-        // DBアクセス準備
+        // Spinnerの設定（Categoryテーブルから取得）
         AppDatabase db = AppDatabase.getInstance(requireContext());
         mainItemDao = db.mainItemDao();
         itemImageDao = db.itemImageDao();
         locationDao = db.locationDao();
         BarcodeDao = db.barcodeDao();
+        historyDao = db.historyDao();
+        CategoryDao categoryDao = db.categoryDao();
+
+        executor.execute(() -> {
+            categoryList.clear();
+            categoryList = categoryDao.getAllCategories(); // カテゴリーを取得
+            // カテゴリーが空の場合はデフォルトを追加
+            if (categoryList.isEmpty()) {
+                //categoryList.add(new Category( "未分類"));
+            }
+            List<String> categoryNames = new ArrayList<>();
+            for (Category c : categoryList) {
+                categoryNames.add(c.name);
+            }
+            getActivity().runOnUiThread(() -> {
+                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+                        requireContext(),
+                        android.R.layout.simple_spinner_item,
+                        categoryNames
+                );
+                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                categorySpinner.setAdapter(spinnerAdapter);
+                // 既存データがある場合は選択状態を復元
+                if (getArguments() != null) {
+                    int itemId = getArguments().getInt("itemId", -1);
+                    if (itemId != -1) {
+                        executor.execute(() -> {
+                            MainItemJoin allJoin = mainItemDao.getMainItemWithImagesAndLocationById(itemId);
+                            if (allJoin != null && getActivity() != null) {
+                                MainItem item = allJoin.mainItem;
+                                getActivity().runOnUiThread(() -> {
+                                    int categoryPosition = 0;
+                                    for (int i = 0; i < categoryList.size(); i++) {
+                                        if (categoryList.get(i).id == item.getCategoryId()) {
+                                            categoryPosition = i;
+                                            break;
+                                        }
+                                    }
+                                    categorySpinner.setSelection(categoryPosition);
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
+        categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position >= 0 && position < categoryList.size()) {
+                    selectedCategoryId = categoryList.get(position).id;
+                }
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedCategoryId = -1;
+            }
+        });
 
         // 引数からIDを取得し、アイテム情報を取得
         if (getArguments() != null) { // バンドルがnullでない場合
@@ -105,7 +161,9 @@ public class FoodItemFragment extends Fragment {
                         getActivity().runOnUiThread(() -> {
                             nameEditText.setText(item.getName());
                             quantityEditText.setText(String.valueOf(item.getQuantity()));
-                            expiryEditText.setText(item.getExpirationDate());
+                            if (item.getExpirationDate() != null) {
+                                expiryEditText.setText(item.getExpirationDate().toString());
+                            }
 
                             // 場所情報を設定
                             if (allJoin.location != null) {
@@ -132,17 +190,13 @@ public class FoodItemFragment extends Fragment {
                             }
 
                             // カテゴリーの設定
-                            String[] categories = getResources().getStringArray(R.array.categories);
-                            String itemCategory = item.getCategory();
                             int categoryPosition = 0;
-
-                            for (int i = 0; i < categories.length; i++) {
-                                if (categories[i].equals(itemCategory)) {
+                            for (int i = 0; i < categoryList.size(); i++) {
+                                if (categoryList.get(i).id == item.getCategoryId()) {
                                     categoryPosition = i;
                                     break;
                                 }
                             }
-
                             categorySpinner.setSelection(categoryPosition);
                         });
                     }
@@ -164,9 +218,9 @@ public class FoodItemFragment extends Fragment {
             AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
             builder.setView(calendarDialogView)
                     .setPositiveButton("OK", (dialog, which) -> {
-                        String selectedDate = SC.getSelectedDate();
+                        java.time.LocalDate selectedDate = SC.getSelectedDate(); // String から java.time.LocalDate に変更
                         if (selectedDate != null) {
-                            expiryEditText.setText(selectedDate);
+                            expiryEditText.setText(selectedDate.toString()); // LocalDate を String に変換
                         }
                     })
                     .setNegativeButton("キャンセル", (dialog, which) -> dialog.dismiss())
@@ -179,10 +233,10 @@ public class FoodItemFragment extends Fragment {
             // バリデーション
             String name = nameEditText.getText().toString();
             String quantityStr = quantityEditText.getText().toString();
-            String expiryDate = expiryEditText.getText().toString();
+            String expiryDateStr = expiryEditText.getText().toString();
             String locationStr = locationEditText.getText().toString();
 
-            if (name.isEmpty() || quantityStr.isEmpty() || expiryDate.isEmpty()) {
+            if (name.isEmpty() || quantityStr.isEmpty() || expiryDateStr.isEmpty()) {
                 Toast.makeText(getContext(), "すべての必須項目を入力してください", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -193,12 +247,25 @@ public class FoodItemFragment extends Fragment {
                 return;
             }
 
-            String category = categorySpinner.getSelectedItem().toString();
+            // String を LocalDate に変換
+            java.time.LocalDate expiryDate = null;
+            if (!expiryDateStr.isEmpty()) {
+                try {
+                    expiryDate = java.time.LocalDate.parse(expiryDateStr);
+                } catch (java.time.format.DateTimeParseException e) {
+                    Toast.makeText(getContext(), "日付の形式が無効です。YYYY-MM-DD形式で入力してください。", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            final java.time.LocalDate finalExpiryDate = expiryDate;
 
             executor.execute(() -> {
                 try {
                     MainItem mainItem;
                     int itemId = -1;
+                    int oldQuantity = 0;
+                    boolean isUpdate = false;
 
                     // 更新または新規作成の処理
                     if (getArguments() != null) {
@@ -206,27 +273,45 @@ public class FoodItemFragment extends Fragment {
                         if(getArguments().getBoolean("isNewItem", false)) {
                             barcode = getArguments().getString("barcode", null);
                         }
-                        //barcode = getArguments().getString("barcode", null);
                     }
 
                     if (itemId != -1) {
                         // 更新の場合
                         mainItem = mainItemDao.getMainItemById(itemId);
+                        oldQuantity = mainItem.getQuantity();
                         mainItem.setName(name);
                         mainItem.setQuantity(quantity);
-                        mainItem.setCategory(category);
-                        mainItem.setExpirationDate(expiryDate);
+                        mainItem.setCategoryId(selectedCategoryId);
+                        mainItem.setExpirationDate(finalExpiryDate);
                         mainItemDao.update(mainItem);
+                        isUpdate = true;
                     } else {
                         // 新規作成の場合
                         MainItem newItem = new MainItem(
                                 quantity,
-                                category,
+                                selectedCategoryId,
                                 name,
-                                expiryDate
+                                finalExpiryDate
                         );
                         long newItemId = mainItemDao.insert(newItem); // 保存してIDを取得
                         itemId = (int) newItemId; // 新しいIDを設定
+                        oldQuantity = 0;
+                    }
+
+                    // 数量変更履歴の記録
+                    if (isUpdate) {
+                        if (oldQuantity != quantity) {
+                            String type = (quantity > oldQuantity) ? "input" : "output";
+                            int diff = Math.abs(quantity - oldQuantity);
+                            String date = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
+                            History history = new History(itemId, diff, type, date);
+                            historyDao.insert(history);
+                        }
+                    } else {
+                        // 新規作成時はinputとして記録
+                        String date = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
+                        History history = new History(itemId, quantity, "input", date);
+                        historyDao.insert(history);
                     }
 
                     // 場所情報の保存
@@ -422,3 +507,4 @@ public class FoodItemFragment extends Fragment {
         return outputFile.getAbsolutePath();
     }
 }
+
