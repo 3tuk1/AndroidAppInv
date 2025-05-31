@@ -67,7 +67,7 @@
             android:id="@+id/analysisTabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?attr/colorPrimary"
+            android:background="@color/gray"
             app:tabTextColor="@android:color/white"
             app:tabSelectedTextColor="@color/neon_green"
             app:tabIndicatorColor="@color/neon_green"/>

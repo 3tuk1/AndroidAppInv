@@ -15,8 +15,10 @@ import androidx.camera.core.ImageCaptureException;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import com.inv.inventryapp.R;
+import android.media.ExifInterface; // ExifInterface をインポート
 
 import java.io.File;
+import java.io.IOException; // IOException をインポート
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -75,6 +77,7 @@ public class SimpleCameraActivity extends BaseCameraActivity {
 
         Log.d(TAG, "撮影ファイルパス: " + photoFile.getAbsolutePath());
 
+        // 画像キャプチャのオプションを設定
         ImageCapture.OutputFileOptions outputOptions =
                 new ImageCapture.OutputFileOptions.Builder(photoFile).build();
 
@@ -85,6 +88,15 @@ public class SimpleCameraActivity extends BaseCameraActivity {
                     @Override
                     public void onImageSaved(@NonNull ImageCapture.OutputFileResults results) {
                         Log.d(TAG, "写真保存成功: " + photoFile.getAbsolutePath());
+
+                        try {
+                            ExifInterface exifInterface = new ExifInterface(photoFile.getAbsolutePath());
+                            exifInterface.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(ExifInterface.ORIENTATION_ROTATE_90));
+                            exifInterface.saveAttributes();
+                            Log.d(TAG, "Exif 情報に回転情報を設定しました。");
+                        } catch (IOException e) {
+                            Log.e(TAG, "Exif 情報の設定に失敗しました。", e);
+                        }
 
                         // FileProviderを使用してUriを生成
                         Uri photoUri = FileProvider.getUriForFile(
@@ -115,3 +127,4 @@ public class SimpleCameraActivity extends BaseCameraActivity {
         );
     }
 }
+

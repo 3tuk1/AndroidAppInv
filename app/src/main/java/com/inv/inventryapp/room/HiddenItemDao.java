@@ -20,5 +20,13 @@ public interface HiddenItemDao {
 
     @Query("DELETE FROM hidden_items WHERE item_id = :itemId")
     void deleteByItemId(int itemId);
+
+    // 全部の非表示アイテムを削除
+    @Query("DELETE FROM hidden_items")
+    void deleteAllHiddenItems();
+
+
+    @Query("SELECT * FROM hidden_items WHERE id = :id")
+    HiddenItem getHiddenItemById(int id);
 }
 

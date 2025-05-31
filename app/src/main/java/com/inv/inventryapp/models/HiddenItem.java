@@ -15,5 +15,8 @@ public class HiddenItem {
     public HiddenItem(int itemId) {
         this.itemId = itemId;
     }
+    public int getId() {
+        return id;
+    }
 }
 

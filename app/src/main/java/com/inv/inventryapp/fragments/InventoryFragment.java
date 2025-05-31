@@ -21,23 +21,23 @@ import com.inv.inventryapp.room.CategoryDao;
 import com.inv.inventryapp.room.HiddenItemDao;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import android.util.Log;
+import com.inv.inventryapp.utils.HidenManage;
 
 public class InventoryFragment extends Fragment {
 
     private static final String TAG = "InventoryFragment";
     private MainItemDao mainItemDao;
-    private HiddenItemDao hiddenItemDao;
+    private HiddenItemDao hiddenItemDao; // hiddenItemDao は引き続き使用する可能性があります
     private RecyclerView recyclerView; // 大量のデータのスクロール表示のためのRecyclerView
     private FoodItemAdapter adapter;
     private List<MainItemJoin> allItems;
     private List<MainItemJoin> filteredItems;
     private List<Category> categoryList = new ArrayList<>();
-    private HashSet<Integer> hiddenItemIdSet = new HashSet<>();
+    private HidenManage hidenManage; // HidenManage のインスタンスを保持
 
     private final Executor executor = Executors.newSingleThreadExecutor();
 
@@ -52,67 +52,65 @@ public class InventoryFragment extends Fragment {
         AppDatabase db = AppDatabase.getInstance(requireContext());
         mainItemDao = db.mainItemDao();
         CategoryDao categoryDao = db.categoryDao();
-        hiddenItemDao = db.hiddenItemDao();
+        hiddenItemDao = db.hiddenItemDao(); // 必要に応じて残す
+        hidenManage = new HidenManage(requireContext()); // HidenManage を初期化
+
         executor.execute(() -> {
             categoryList.clear();
             categoryList.addAll(categoryDao.getAllCategories());
-            // 非表示IDリストを取得
-            hiddenItemIdSet.clear();
-            for (HiddenItem hi : hiddenItemDao.getAll()) {
-                hiddenItemIdSet.add(hi.itemId);
+            if (getActivity() != null) { // getActivity() のnullチェックを追加
+                getActivity().runOnUiThread(() -> {
+                    adapter = new FoodItemAdapter(new ArrayList<>(), categoryList);
+                    recyclerView.setAdapter(adapter);
+                    // アイテムをタップした時の処理
+                    adapter.setOnItemClickListener((parent, itemView, position, id) -> {
+                        if (position >= 0 && position < adapter.getItemCount()) {// アイテムがホルダーの中にあるか確認
+                            MainItemJoin selectedItem = adapter.getItem(position); // 選択されたアイテムを取得
+                            if (selectedItem != null && selectedItem.mainItem != null) { // 選択されたアイテムがnullでないか確認
+                                // FoodItemFragmentのインスタンスを作成
+                                FoodItemFragment fragment = new FoodItemFragment();
+
+                                Bundle bundle = new Bundle();// アイテムの情報を渡すためのBundleを作成
+                                bundle.putInt("itemId", selectedItem.mainItem.getId());
+                                fragment.setArguments(bundle);
+
+                                requireActivity().getSupportFragmentManager()
+                                        .beginTransaction()
+                                        .replace(R.id.fragment_container, fragment)
+                                        .addToBackStack(null)
+                                        .commit();
+
+                                hidenManage.loadHiddenItems();
+                            } else {
+                                Log.e(TAG, "選択されたアイテムまたはメインアイテムがnullです");
+                            }
+                        } else {
+                            Log.e(TAG, "無効なポジション: " + position);
+                        }
+                    });
+                    // アイテムを長押しした時の処理
+                    adapter.setOnItemLongClickListener((parent, itemView, position, id) -> {
+                        if (position >= 0 && position < adapter.getItemCount()) {
+                            MainItemJoin selectedItem = adapter.getItem(position);
+                            if (selectedItem != null && selectedItem.mainItem != null) {
+                                executor.execute(() -> {
+                                    db.DeleateId(selectedItem.mainItem.getId());
+                                    if (getActivity() != null) {
+                                        // UIスレッドでリストを再読み込みして更新
+                                        getActivity().runOnUiThread(this::loadItems);
+                                    }
+                                });
+                            } else {
+                                Log.e(TAG, "長押しされたアイテムまたはメインアイテムがnullです。削除できません。");
+                            }
+                        } else {
+                            Log.e(TAG, "長押しされたアイテムのポジションが無効です: " + position);
+                        }
+                        return true; // 長押しイベントを消費したことを示す
+                    });
+                    init();
+                });
             }
-            getActivity().runOnUiThread(() -> {
-                adapter = new FoodItemAdapter(new ArrayList<>(), categoryList);
-                recyclerView.setAdapter(adapter);
-                // アイテムをタップした時の処理
-                adapter.setOnItemClickListener((parent, itemView, position, id) -> {
-                    // 長押し
-                    // parentはRecyclerViewのインスタンス,itemViewはタップされたアイテムのView
-                    // positionはタップされたアイテムの位置,long idはアイテムのID
-                    if (position >= 0 && position < adapter.getItemCount()) {// アイテムがホルダーの中にあるか確認
-                        MainItemJoin selectedItem = adapter.getItem(position); // 選択されたアイテムを取得
-                        if (selectedItem != null && selectedItem.mainItem != null) { // 選択されたアイテムがnullでないか確認
-                            // FoodItemFragmentのインスタンスを作成
-                            FoodItemFragment fragment = new FoodItemFragment();
-
-                            Bundle bundle = new Bundle();// アイテムの情報を渡すためのBundleを作成
-                            bundle.putInt("itemId", selectedItem.mainItem.getId());
-                            fragment.setArguments(bundle);
-
-                            requireActivity().getSupportFragmentManager()
-                                    .beginTransaction()
-                                    .replace(R.id.fragment_container, fragment)
-                                    .addToBackStack(null)
-                                    .commit();
-                        } else {
-                            Log.e(TAG, "選択されたアイテムまたはメインアイテムがnullです");
-                        }
-                    } else {
-                        Log.e(TAG, "無効なポジション: " + position);
-                    }
-                });
-                // アイテムを長押しした時の処理
-                adapter.setOnItemLongClickListener((parent, itemView, position, id) -> {
-                    if (position >= 0 && position < adapter.getItemCount()) {
-                        MainItemJoin selectedItem = adapter.getItem(position);
-                        if (selectedItem != null && selectedItem.mainItem != null) {
-                            executor.execute(() -> {
-                                db.DeleateId(selectedItem.mainItem.getId());
-                                if (getActivity() != null) {
-                                    // UIスレッドでリストを再読み込みして更新
-                                    getActivity().runOnUiThread(this::loadItems);
-                                }
-                            });
-                        } else {
-                            Log.e(TAG, "長押しされたアイテムまたはメインアイテムがnullです。削除できません。");
-                        }
-                    } else {
-                        Log.e(TAG, "長押しされたアイテムのポジションが無効です: " + position);
-                    }
-                    return true; // 長押しイベントを消費したことを示す
-                });
-                init();
-            });
         });
 
         return view;
@@ -127,34 +125,43 @@ public class InventoryFragment extends Fragment {
     public void loadItems() {
         executor.execute(() -> {
             try {
-                List<MainItemJoin> items = mainItemDao.getMainItemWithImagesAndLocationOnlyPositive();
-                // 非表示IDリストを再取得
-                hiddenItemIdSet.clear();
-                for (HiddenItem hi : hiddenItemDao.getAll()) {
-                    hiddenItemIdSet.add(hi.itemId);
-                }
-                // 非表示IDに含まれていないものだけを表示
-                List<MainItemJoin> visibleItems = new ArrayList<>();
-                for (MainItemJoin item : items) {
-                    if (item != null && item.mainItem != null && !hiddenItemIdSet.contains(item.mainItem.getId())) {
-                        visibleItems.add(item);
+                // 1. DBから全てのMainItemJoinを取得 (画像や場所情報も含む)
+                List<MainItemJoin> allItemsFromDb = mainItemDao.getMainItemWithImagesAndLocationOnlyPositive(); // このメソッドがMainItemJoinを返すことを想定
+
+                // 2. HidenManageを使って、HiddenItemテーブルに基づいて表示すべきアイテムをフィルタリング
+                List<MainItemJoin> visibleItems = hidenManage.getVisibleItemsFromDb(allItemsFromDb);
+
+                // 3. HidenManageのItemIsNoVisibleを呼び出して、現在のアイテム数量に基づいてHiddenItemテーブルを更新
+                //    注意: allItemsFromDbからMainItemのリストを抽出する必要がある
+                List<MainItem> mainItemsForHidenManage = new ArrayList<>();
+                if (allItemsFromDb != null) {
+                    for (MainItemJoin joinItem : allItemsFromDb) {
+                        if (joinItem != null && joinItem.mainItem != null) {
+                            mainItemsForHidenManage.add(joinItem.mainItem);
+                        }
                     }
                 }
+                hidenManage.ItemIsNoVisible(mainItemsForHidenManage);
+
+                // 4. UIスレッドでアダプターを更新
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        allItems = visibleItems;
-                        filteredItems = new ArrayList<>(allItems);
-                        adapter.updateItems(filteredItems);
+                        allItems = visibleItems; // allItems をフィルタリングされたリストで更新
+                        filteredItems = new ArrayList<>(allItems); // filteredItems も同様に更新
+                        if (adapter != null) {
+                            adapter.updateItems(filteredItems);
+                        }
                     });
                 }
             } catch (Exception e) {
                 Log.e(TAG, "データ読み込み中にエラーが発生しました", e);
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        // エラー発生時は空のリストを表示
                         allItems = new ArrayList<>();
                         filteredItems = new ArrayList<>();
-                        adapter.updateItems(filteredItems);
+                        if (adapter != null) {
+                            adapter.updateItems(filteredItems);
+                        }
                     });
                 }
             }
@@ -252,8 +259,6 @@ public class InventoryFragment extends Fragment {
             Log.e(TAG, "並べ替え中にエラーが発生しました", e);
         }
     }
-
-
 
     // 並べ替え順の列挙型
     public enum SortOrder {
