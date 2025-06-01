@@ -277,9 +277,10 @@ public class FoodItemFragment extends Fragment {
             // レイアウトからCalendarViewを取得
             CalendarView calendarView = calendarDialogView.findViewById(R.id.calendarView);
 
-            // カレンダーのセットアップ（SelectCalendarの代わりにManageCalendarを使用）
+            // カレンダーのセットアップ（初期化順序を修正）
             SelectCalendar SC = SelectCalendar.getInstance();
             SC.setupCalendar(calendarView, calendarDialogView);
+            SC.initializeCalendar(); // CalendarViewが設定された後にバインドを初期化
 
             // ダイアログの作成と表示
             AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
@@ -619,3 +620,4 @@ public class FoodItemFragment extends Fragment {
         return outputFile.getAbsolutePath();
     }
 }
+

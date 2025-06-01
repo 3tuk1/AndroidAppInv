@@ -396,12 +396,18 @@ public class AnalyticsRepository {
             for (PrioritizedItem prioritizedItem : prioritizedItems) {
                 if (prioritizedItem.getRecommendedPurchaseQuantity() > 0) {
                     String reason = ""; // 購入理由を決定するロジック
+                    ItemAnalyticsData analyticsData = prioritizedItem.getAnalyticsData(); // analyticsDataを事前に取得
+
                     if (prioritizedItem.getMainItem().getQuantity() == 0) {
                         reason = "在庫なし";
+                    } else if (analyticsData != null && analyticsData.getOptimalStockLevel() > 0 && prioritizedItem.getMainItem().getQuantity() < analyticsData.getOptimalStockLevel()) {
+                        reason = "最適在庫レベル未満";
+                    } else if (analyticsData != null && analyticsData.getMinStockLevel() > 0 && prioritizedItem.getMainItem().getQuantity() < analyticsData.getMinStockLevel()) {
+                        reason = "最低在庫レベル未満";
                     } else if (prioritizedItem.getRemainingDays() > 0 && prioritizedItem.getRemainingDays() <= 3) {
                         reason = "残日数3日以下";
-                    } else if (prioritizedItem.getAnalyticsData() != null && prioritizedItem.getMainItem().getQuantity() <= prioritizedItem.getAnalyticsData().getMinStockLevel() && prioritizedItem.getAnalyticsData().getMinStockLevel() > 0) {
-                        reason = "最低在庫レベル以下";
+                    } else if (prioritizedItem.getRemainingDays() > 0 && prioritizedItem.getRemainingDays() <= 7) {
+                        reason = "残日数7日以下";
                     } else if (prioritizedItem.getRecommendedPurchaseQuantity() > 0) { // 上記以外で推奨購入量がある場合
                         reason = "補充推奨";
                     }
@@ -423,5 +429,86 @@ public class AnalyticsRepository {
      */
     public LiveData<List<History>> getAllConsumptionHistory() {
         return historyDao.getAllOutputAndDeleteHistorySortedDesc();
+    }
+
+    /**
+     * 特定のアイテムを買い物リスト推奨から除外する
+     * @param itemId 除外するアイテムのID
+     */
+    public void removeItemFromShoppingListRecommendations(int itemId) {
+        ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(itemId);
+        if (analyticsData != null) {
+            // 推奨購入量を計算するもとになる最適在庫レベルなどを一時的に0に設定して
+            // 買い物リストに表示されないようにする
+            analyticsData.setOptimalStockLevel(0);
+            analyticsData.setMinStockLevel(0);
+            itemAnalyticsDataDao.insert(analyticsData); // OnConflictStrategy.REPLACE により更新
+        }
+    }
+
+    /**
+     * ユーザーが定義した購入数量を更新する
+     * @param itemId 対象のアイテムID
+     * @param newQuantity 新しい購入数量
+     */
+    public void updateUserDefinedPurchaseQuantity(int itemId, int newQuantity) {
+        // 将来的にはユーザー定義の購入数量を格納するテーブルを作成することも検討
+        // 現在は簡略化のため、ItemAnalyticsDataの最適在庫レベルを一時的に調整して実装
+        ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(itemId);
+        MainItem item = mainItemDao.findItemById(itemId);
+
+        if (analyticsData != null && item != null) {
+            // 現在の在庫 + 新しい購入数量 = 目標とする最適在庫レベル
+            analyticsData.setOptimalStockLevel(item.getQuantity() + newQuantity);
+            itemAnalyticsDataDao.insert(analyticsData); // OnConflictStrategy.REPLACE により更新
+        }
+    }
+
+    /**
+     * 指定された日付の消費予測量を計算する。
+     * 予測ロジック:
+     * 1. その日に在庫切れが予測されるアイテムの現在の在庫量
+     * 2. 平均消費日数に基づいて、その日に消費されると予測される量 (現在の在庫量を超えない範囲で)
+     * @param date 予測対象の日付
+     * @return LiveData<Double> 予測される総消費量
+     */
+    public LiveData<Double> getDailyConsumptionPrediction(LocalDate date) {
+        return Transformations.map(mainItemDao.getAllMainItemsLiveData(), allItems -> {
+            double predictedConsumption = 0.0;
+            if (allItems == null || allItems.isEmpty()) {
+                return 0.0;
+            }
+
+            for (MainItem item : allItems) {
+                ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(item.getId());
+                if (analyticsData != null) {
+                    // 1. 在庫切れ予測日に基づく予測
+                    if (analyticsData.getStockoutPredictionDate() != null && analyticsData.getStockoutPredictionDate().equals(date)) {
+                        predictedConsumption += item.getQuantity(); // その日に切れるなら現在の在庫が消費されると仮定
+                    }
+
+                    // 2. 平均消費日数に基づく予測
+                    if (analyticsData.getAverageConsumptionDays() > 0) {
+                        // 1単位を消費するのにかかる平均日数
+                        float avgDaysPerUnit = analyticsData.getAverageConsumptionDays();
+                        // 1日あたりの平均消費量
+                        double dailyConsumptionRate = 1.0 / avgDaysPerUnit;
+
+                        // その日に消費される予測量 (現在の在庫を超えない)
+                        double dailyPredictedForItem = Math.min(item.getQuantity(), dailyConsumptionRate);
+
+                        // 在庫切れ予測日と重複しないように、まだ加算されていない場合のみ加算
+                        // (より単純化するため、ここでは重複を許容して加算し、後で調整するアプローチも考えられる)
+                        // 今回は簡略化のため、在庫切れ予測日のロジックと独立して加算するが、
+                        // より正確には、在庫切れ予測で既に加算された分は除くべき。
+                        // ここでは、在庫切れ予測日でない場合にのみ平均消費量からの予測を加える
+                        if (analyticsData.getStockoutPredictionDate() == null || !analyticsData.getStockoutPredictionDate().equals(date)) {
+                             predictedConsumption += dailyPredictedForItem;
+                        }
+                    }
+                }
+            }
+            return predictedConsumption;
+        });
     }
 }

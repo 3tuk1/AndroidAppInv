@@ -50,7 +50,7 @@ public abstract class CalendarSetup {
         });
     }
 
-    abstract void selectBind();
+    public abstract void selectBind();
 
     // 日付をクリックしたときの処理
     public abstract void onDateSelected(LocalDate date);
@@ -60,11 +60,20 @@ public abstract class CalendarSetup {
 
     // ViewContainerクラス
     public class DayViewContainer extends ViewContainer {
-        public final TextView textView;
+        public TextView textView; // finalを削除して、nullの場合のフォールバックを可能にする
 
         public DayViewContainer(@NonNull View view) {
             super(view);
             textView = view.findViewById(R.id.calendarDayText);
+            if (textView == null) {
+                // Log an error, but don't throw an exception to prevent immediate crash.
+                android.util.Log.e("DayViewContainer",
+                    "calendarDayText is null. View ID: " + (view.getId() == View.NO_ID ? "no_id" : view.getResources().getResourceEntryName(view.getId())) +
+                    ", View class: " + view.getClass().getName() +
+                    ". Check your day layout XML file (e.g., calendar_day_layout.xml) " +
+                    "and ensure it contains a TextView with android:id=\"@+id/calendarDayText\"."
+                );
+            }
         }
     }
 }

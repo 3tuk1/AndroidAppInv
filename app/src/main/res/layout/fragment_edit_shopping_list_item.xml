@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- filepath: d:\projectM\invManage\inventryApp\app\src\main\res\layout\fragment_edit_shopping_list_item.xml -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".fragments.EditShoppingListItemFragment">
+
+    <TextView
+        android:id="@+id/editItemNameLabelTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="商品名:"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/editItemNameTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@+id/editItemNameLabelTextView"
+        app:layout_constraintStart_toEndOf="@+id/editItemNameLabelTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="サンプル商品名" />
+
+    <TextView
+        android:id="@+id/editReasonLabelTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="購入理由:"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editItemNameTextView" />
+
+    <TextView
+        android:id="@+id/editReasonTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:textSize="16sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/editReasonLabelTextView"
+        app:layout_constraintStart_toEndOf="@+id/editReasonLabelTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="在庫が少ないため" />
+
+    <TextView
+        android:id="@+id/editQuantityLabelTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="購入数量:"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editReasonTextView" />
+
+    <EditText
+        android:id="@+id/editQuantityEditText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:inputType="number"
+        android:textSize="18sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/editQuantityLabelTextView"
+        app:layout_constraintStart_toEndOf="@+id/editQuantityLabelTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="3" />
+
+    <Button
+        android:id="@+id/saveChangesButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="保存"
+        app:layout_constraintEnd_toStartOf="@+id/cancelButton"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editQuantityEditText"
+        android:layout_marginEnd="8dp"/>
+
+    <Button
+        android:id="@+id/cancelButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="キャンセル"
+        style="?attr/materialButtonOutlinedStyle"
+        app:layout_constraintBaseline_toBaselineOf="@+id/saveChangesButton"
+        app:layout_constraintStart_toEndOf="@+id/saveChangesButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="8dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

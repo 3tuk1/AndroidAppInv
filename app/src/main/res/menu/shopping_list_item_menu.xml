@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_edit_shopping_list_item"
+        android:title="編集" />
+    <item
+        android:id="@+id/action_delete_shopping_list_item"
+        android:title="削除" />
+</menu>
+
