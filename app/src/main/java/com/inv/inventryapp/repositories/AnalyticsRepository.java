@@ -45,6 +45,43 @@ public class AnalyticsRepository {
     }
 
     /**
+     * 消費予測の信頼度レベルを定義するenum
+     */
+    public enum PredictionConfidenceLevel {
+        HIGH,    // 高信頼度 (多くの過去データに基づく)
+        MEDIUM,  // 中信頼度 (一定の過去データに基づく)
+        LOW,     // 低信頼度 (少ないデータに基づく)
+        UNKNOWN  // 信頼度不明 (データ不足)
+    }
+
+    /**
+     * 消費予測の詳細情報を格納するクラス
+     */
+    public static class ConsumptionPredictionDetail {
+        private double predictedAmount;  // 予測消費量
+        private PredictionConfidenceLevel confidenceLevel;  // 予測の信頼度
+        private String statusMessage;    // 予測状態メッセージ
+        private int daysUntilStockout;   // 在庫切れまでの日数（予測）
+        private boolean isUrgent;        // 緊急フラグ（すぐに消費される予測）
+
+        public ConsumptionPredictionDetail(double predictedAmount, PredictionConfidenceLevel confidenceLevel,
+                                           String statusMessage, int daysUntilStockout, boolean isUrgent) {
+            this.predictedAmount = predictedAmount;
+            this.confidenceLevel = confidenceLevel;
+            this.statusMessage = statusMessage;
+            this.daysUntilStockout = daysUntilStockout;
+            this.isUrgent = isUrgent;
+        }
+
+        // Getterメソッド
+        public double getPredictedAmount() { return predictedAmount; }
+        public PredictionConfidenceLevel getConfidenceLevel() { return confidenceLevel; }
+        public String getStatusMessage() { return statusMessage; }
+        public int getDaysUntilStockout() { return daysUntilStockout; }
+        public boolean isUrgent() { return isUrgent; }
+    }
+
+    /**
      * 日別/週別/月別の消費傾向データを取得する
      * @param startDate 開始日
      * @param endDate 終了日
@@ -205,6 +242,129 @@ public class AnalyticsRepository {
             });
         });
         return resultLiveData;
+    }
+
+    /**
+     * 特定の日の詳細な消費予測情報を取得する（改善版）
+     * @param date 予測対象の日付
+     * @return LiveData<List<ConsumptionPredictionDetail>> 各アイテムの詳細予測情報
+     */
+    public LiveData<List<ConsumptionPredictionDetail>> getDetailedConsumptionPrediction(LocalDate date) {
+        MediatorLiveData<List<ConsumptionPredictionDetail>> resultLiveData = new MediatorLiveData<>();
+        resultLiveData.addSource(mainItemDao.getAllMainItemsLiveData(), allItems -> {
+            executorService.execute(() -> { // バックグラウンドスレッドで実行
+                List<ConsumptionPredictionDetail> predictions = new ArrayList<>();
+                if (allItems == null || allItems.isEmpty()) {
+                    resultLiveData.postValue(predictions);
+                    return;
+                }
+
+                LocalDate today = LocalDate.now();
+
+                for (MainItem item : allItems) {
+                    // バックグラウンドスレッドでアイテムの分析データを取得
+                    ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(item.getId());
+                    if (analyticsData != null) {
+                        double predictedAmount = 0.0;
+                        String statusMessage = "予測なし";
+                        PredictionConfidenceLevel confidenceLevel = PredictionConfidenceLevel.UNKNOWN;
+                        int daysUntilStockout = -1;
+                        boolean isUrgent = false;
+
+                        // 在庫切れ予測日がある場合
+                        if (analyticsData.getStockoutPredictionDate() != null) {
+                            daysUntilStockout = (int) ChronoUnit.DAYS.between(today, analyticsData.getStockoutPredictionDate());
+
+                            // 予測日が今日の場合
+                            if (analyticsData.getStockoutPredictionDate().equals(date)) {
+                                predictedAmount = item.getQuantity();
+                                statusMessage = "本日在庫切れの予測";
+                                isUrgent = true;
+                            }
+                            // 予測日が明日の場合
+                            else if (analyticsData.getStockoutPredictionDate().equals(date.plusDays(1))) {
+                                predictedAmount = item.getQuantity() / 2.0; // 半分程度消費と予測
+                                statusMessage = "明日在庫切れの予測";
+                                isUrgent = true;
+                            }
+
+                            // 在庫切れまでの日数に基づいて信頼度を設定
+                            if (daysUntilStockout <= 3) {
+                                confidenceLevel = PredictionConfidenceLevel.HIGH;
+                            } else if (daysUntilStockout <= 7) {
+                                confidenceLevel = PredictionConfidenceLevel.MEDIUM;
+                            } else {
+                                confidenceLevel = PredictionConfidenceLevel.LOW;
+                            }
+                        }
+
+                        // 平均消費日数に基づく予測がある場合
+                        if (analyticsData.getAverageConsumptionDays() > 0) {
+                            float avgDaysPerUnit = analyticsData.getAverageConsumptionDays();
+                            double dailyRate = 1.0 / avgDaysPerUnit;
+                            double dailyPredictedForItem = Math.min(item.getQuantity(), dailyRate);
+
+                            // 予測の重複がない場合のみ加算
+                            if (predictedAmount == 0.0) {
+                                predictedAmount = dailyPredictedForItem;
+
+                                // 消費ペースが速い場合
+                                if (avgDaysPerUnit <= 2) {
+                                    statusMessage = "高頻度消費アイテム";
+                                    isUrgent = dailyPredictedForItem > 0.3 * item.getQuantity();
+                                } else {
+                                    statusMessage = "通常消費ペース";
+                                }
+
+                                // データ量に基づいて信頼度を評価
+                                if (analyticsData.getDataPointCount() >= 10) {
+                                    confidenceLevel = PredictionConfidenceLevel.HIGH;
+                                } else if (analyticsData.getDataPointCount() >= 5) {
+                                    confidenceLevel = PredictionConfidenceLevel.MEDIUM;
+                                } else {
+                                    confidenceLevel = PredictionConfidenceLevel.LOW;
+                                }
+                            }
+                        }
+
+                        // 予測情報が得られた場合のみリストに追加
+                        if (predictedAmount > 0) {
+                            ConsumptionPredictionDetail predictionDetail = new ConsumptionPredictionDetail(
+                                predictedAmount, confidenceLevel, statusMessage, daysUntilStockout, isUrgent
+                            );
+                            predictions.add(predictionDetail);
+                        }
+                    }
+                }
+
+                // 緊急度でソート（緊急なものを先頭に）
+                Collections.sort(predictions, (p1, p2) -> {
+                    if (p1.isUrgent() != p2.isUrgent()) {
+                        return p1.isUrgent() ? -1 : 1;
+                    }
+                    return Integer.compare(p1.getDaysUntilStockout(), p2.getDaysUntilStockout());
+                });
+
+                resultLiveData.postValue(predictions);
+            });
+        });
+        return resultLiveData;
+    }
+
+    /**
+     * 予測消費量の視覚表示用カテゴリを取得する
+     * @param item アイテム
+     * @param prediction 予測情報
+     * @return 消費予測カテゴリ（"HIGH", "MEDIUM", "LOW"のいずれか）
+     */
+    public String getConsumptionCategory(MainItem item, ConsumptionPredictionDetail prediction) {
+        if (prediction.isUrgent() || prediction.getDaysUntilStockout() <= 2) {
+            return "HIGH";
+        } else if (prediction.getPredictedAmount() > 0.2 * item.getQuantity()) {
+            return "MEDIUM";
+        } else {
+            return "LOW";
+        }
     }
 
     /**
@@ -471,31 +631,187 @@ public class AnalyticsRepository {
         }
     }
 
-
+    /**
+     * アイテムの消費分析データを更新する
+     * 平均消費日数、データポイント数、在庫切れ予測日を計算して更新
+     * @param itemId 更新対象のアイテムID
+     */
     public void updateAverageConsumptionDaysForItem(int itemId) {
-        List<History> outputHistory = historyDao.getOutputHistoryForItemDesc(itemId);
-        double avgDays = calculateAverageConsumptionDays(outputHistory);
+        executorService.execute(() -> {
+            // 出力履歴を取得（日付の新しい順）
+            List<History> outputHistory = historyDao.getOutputHistoryForItemDesc(itemId);
 
-        ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(itemId);
-        if (analyticsData == null) {
-            analyticsData = new ItemAnalyticsData(
-                    itemId,
-                    null, // consumptionReason
-                    null, // consumptionTiming
-                    null, // consumptionPace
-                    0,    // minStockLevel
-                    0,    // optimalStockLevel
-                    null, // restockTimingGuideline
-                    (float) avgDays, // averageConsumptionDays
-                    null, // stockoutPredictionDate
-                    null  // seasonalConsumptionPattern
-            );
-        } else {
-            analyticsData.setAverageConsumptionDays((float) avgDays);
-        }
-        itemAnalyticsDataDao.insert(analyticsData); // OnConflictStrategy.REPLACE により、存在すれば更新、なければ挿入
+            // データポイント数 = 履歴レコード総数
+            int dataPointCount = outputHistory != null ? outputHistory.size() : 0;
+
+            // 平均消費日数を計算
+            double avgDays = calculateAverageConsumptionDays(outputHistory);
+
+            // 現在のアイテム情報を取得
+            MainItem item = mainItemDao.findItemById(itemId);
+            ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(itemId);
+
+            if (analyticsData == null) {
+                // 分析データが存在しない場合は新規作成
+                analyticsData = new ItemAnalyticsData(
+                        itemId,
+                        null,       // consumptionReason
+                        null,       // consumptionTiming
+                        null,       // consumptionPace
+                        0,          // minStockLevel
+                        0,          // optimalStockLevel
+                        null,       // restockTimingGuideline
+                        (float) avgDays, // averageConsumptionDays
+                        null,       // stockoutPredictionDate
+                        null        // seasonalConsumptionPattern
+                );
+            } else {
+                // 既存データの更新
+                analyticsData.setAverageConsumptionDays((float) avgDays);
+            }
+
+            // データポイント数を更新
+            analyticsData.setDataPointCount(dataPointCount);
+
+            // 在庫切れ予測日を計算・更新
+            if (item != null && avgDays > 0 && item.getQuantity() > 0) {
+                // 残り日数 = 現在の在庫数 × 1単位あたりの平均消費日数
+                float remainingDays = item.getQuantity() * (float) avgDays;
+                // 在庫切れ予測日 = 今日 + 残り日数
+                LocalDate stockoutDate = LocalDate.now().plusDays((long) Math.ceil(remainingDays));
+                analyticsData.setStockoutPredictionDate(stockoutDate);
+            } else {
+                // 計算に必要な条件を満たさない場合は予測日をクリア
+                analyticsData.setStockoutPredictionDate(null);
+            }
+
+            // 消費理由と消費タイミングの分析（データがあれば）
+            if (dataPointCount > 0) {
+                // 最も多い消費理由を特定
+                Map<String, Integer> reasonCounts = new HashMap<>();
+                for (History history : outputHistory) {
+                    String reason = history.getConsumptionReason();
+                    if (reason != null && !reason.isEmpty()) {
+                        reasonCounts.put(reason, reasonCounts.getOrDefault(reason, 0) + 1);
+                    }
+                }
+
+                // 消費理由が一番多いものを設定
+                if (!reasonCounts.isEmpty()) {
+                    String mostCommonReason = Collections.max(reasonCounts.entrySet(),
+                            Map.Entry.comparingByValue()).getKey();
+                    analyticsData.setConsumptionReason(mostCommonReason);
+                }
+
+                // 季節性の検出（過去1年のデータがある場合）
+                // 月別の消費量を分析し、顕著な差があれば季節パターンを設定
+                if (dataPointCount >= 12) {
+                    analyticsData.setSeasonalConsumptionPattern(detectSeasonalPattern(outputHistory));
+                }
+            }
+
+            // データベースに保存
+            itemAnalyticsDataDao.insert(analyticsData); // OnConflictStrategy.REPLACE により、存在すれば更新、なければ挿入
+        });
     }
 
+    /**
+     * 消費履歴から季節的なパターンを検出
+     * @param history 消費履歴データ
+     * @return 検出された季節パターンの説明文。パターンが検出されない場合はnull。
+     */
+    private String detectSeasonalPattern(List<History> history) {
+        // 履歴が少ない場合は季節性なしと判断
+        if (history == null || history.size() < 12) {
+            return null;
+        }
+
+        // 月ごとの消費量を集計
+        Map<Integer, Integer> monthlyConsumption = new HashMap<>();
+        for (History record : history) {
+            if (record.getDate() != null) {
+                int month = record.getDate().getMonthValue(); // 1-12の月
+                monthlyConsumption.put(month,
+                    monthlyConsumption.getOrDefault(month, 0) + record.getQuantity());
+            }
+        }
+
+        // 四季に分類（日本の季節区分）
+        // 春：3-5月、夏：6-8月、秋：9-11月、冬：12-2月
+        int springConsumption = getSeasonConsumption(monthlyConsumption, 3, 5);
+        int summerConsumption = getSeasonConsumption(monthlyConsumption, 6, 8);
+        int fallConsumption = getSeasonConsumption(monthlyConsumption, 9, 11);
+        int winterConsumption = getSeasonConsumption(monthlyConsumption, 12, 2);
+
+        // 総消費量
+        int totalConsumption = springConsumption + summerConsumption + fallConsumption + winterConsumption;
+        if (totalConsumption == 0) return null;
+
+        // 各季節の消費割合
+        double springRatio = (double) springConsumption / totalConsumption;
+        double summerRatio = (double) summerConsumption / totalConsumption;
+        double fallRatio = (double) fallConsumption / totalConsumption;
+        double winterRatio = (double) winterConsumption / totalConsumption;
+
+        // 顕著な季節パターンを検出（ある季節の消費が平均の1.5倍以上）
+        double averageRatio = 0.25; // 理論上の平均（25%）
+        StringBuilder pattern = new StringBuilder();
+
+        if (springRatio > averageRatio * 1.5) {
+            pattern.append("春に消費量が増加。");
+        }
+        if (summerRatio > averageRatio * 1.5) {
+            pattern.append("夏に消費量が増加。");
+        }
+        if (fallRatio > averageRatio * 1.5) {
+            pattern.append("秋に消費量が増加。");
+        }
+        if (winterRatio > averageRatio * 1.5) {
+            pattern.append("冬に消費量が増加。");
+        }
+
+        // 逆に消費が少ない季節も検出（平均の0.5倍以下）
+        if (springRatio < averageRatio * 0.5) {
+            pattern.append("春は消費が少ない。");
+        }
+        if (summerRatio < averageRatio * 0.5) {
+            pattern.append("夏は消費が少ない。");
+        }
+        if (fallRatio < averageRatio * 0.5) {
+            pattern.append("秋は消費が少ない。");
+        }
+        if (winterRatio < averageRatio * 0.5) {
+            pattern.append("冬は消費が少ない。");
+        }
+
+        return pattern.length() > 0 ? pattern.toString() : null;
+    }
+
+    /**
+     * 指定された月の範囲の消費量合計を計算
+     * @param monthlyConsumption 月別消費量のマップ
+     * @param startMonth 開始月（1～12）
+     * @param endMonth 終了月（1～12）
+     * @return 指定月範囲の消費量合計
+     */
+    private int getSeasonConsumption(Map<Integer, Integer> monthlyConsumption, int startMonth, int endMonth) {
+        int total = 0;
+        if (startMonth <= endMonth) {
+            // 通常の月範囲（例：3月～5月）
+            for (int month = startMonth; month <= endMonth; month++) {
+                total += monthlyConsumption.getOrDefault(month, 0);
+            }
+        } else {
+            // 年をまたぐ月範囲（例：12月～2月）
+            for (int month = startMonth; month <= 12; month++) {
+                total += monthlyConsumption.getOrDefault(month, 0);
+            }
+            for (int month = 1; month <= endMonth; month++) {
+                total += monthlyConsumption.getOrDefault(month, 0);
+            }
+        }
+        return total;
+    }
 
     /**
      * アイテムの平均消費日数を計算する（直近最大7回の消費イベントに基づく）

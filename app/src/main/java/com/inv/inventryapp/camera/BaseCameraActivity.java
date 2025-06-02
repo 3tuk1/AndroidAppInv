@@ -55,6 +55,57 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
         // setupCamera() は startCamera() のコールバック内で呼び出されるように変更します。
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // カメラエグゼキュータの終了
+        if (cameraExecutor != null && !cameraExecutor.isShutdown()) {
+            cameraExecutor.shutdown();
+            cameraExecutor = null;
+        }
+
+        // カメラリソースの完全に解放
+        releaseCamera();
+
+        Log.d("BaseCameraActivity", "onDestroy: カメラリソース解放完了");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // アクティビティがバックグラウンドに移動する際にカメラリソースを解放
+        releaseCamera();
+        Log.d("BaseCameraActivity", "onPause: カメラリソース解放");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 画面に戻ってきた時に、カメラ権限があれば再起動
+        if (checkPermissions() && cameraProvider == null) {
+            startCamera();
+            Log.d("BaseCameraActivity", "onResume: カメラ再起動");
+        }
+    }
+
+    /**
+     * カメラリソースを安全に解放します
+     */
+    private void releaseCamera() {
+        try {
+            if (cameraProvider != null) {
+                // カメラのバインドを全て解除
+                cameraProvider.unbindAll();
+                Log.d("BaseCameraActivity", "カメラのバインドを全て解除しました");
+
+                // カメラプロバイダーの参照クリア（GCのヒント）
+                cameraProvider = null;
+            }
+        } catch (Exception e) {
+            Log.e("BaseCameraActivity", "カメラの解放中にエラー発生", e);
+        }
+    }
+
     protected abstract int getLayoutResource();
 
     protected abstract void processImage(ImageAnalysis imageAnalysis);
@@ -155,18 +206,6 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (cameraProvider != null) {
-            cameraProvider.unbindAll(); // カメラのバインドを解除
-        }
-        if (cameraExecutor != null) {
-            cameraExecutor.shutdown(); // ExecutorService をシャットダウン
-        }
-        Log.d("BaseCameraActivity", "onDestroy: カメラリソースを解放し、Executorをシャットダウン");
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
@@ -183,3 +222,4 @@ public abstract class BaseCameraActivity extends AppCompatActivity {
     }
     // setupCamera は startCamera のコールバックに移動しました。
 }
+

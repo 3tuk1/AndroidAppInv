@@ -47,6 +47,9 @@ public class ItemAnalyticsData {
     @ColumnInfo(name = "seasonal_consumption_pattern")
     private String seasonalConsumptionPattern; // 例: "夏に消費量増加", "冬は消費しない"
 
+    @ColumnInfo(name = "data_point_count")
+    private int dataPointCount; // 予測に使用したデータポイント数
+
     // Constructor
     public ItemAnalyticsData(int itemId, String consumptionReason, String consumptionTiming, String consumptionPace,
                              int minStockLevel, int optimalStockLevel, String restockTimingGuideline,
@@ -61,6 +64,7 @@ public class ItemAnalyticsData {
         this.averageConsumptionDays = averageConsumptionDays;
         this.stockoutPredictionDate = stockoutPredictionDate;
         this.seasonalConsumptionPattern = seasonalConsumptionPattern;
+        this.dataPointCount = 0; // デフォルト値は0
     }
 
     // Getters and Setters
@@ -93,5 +97,13 @@ public class ItemAnalyticsData {
 
     public String getSeasonalConsumptionPattern() { return seasonalConsumptionPattern; }
     public void setSeasonalConsumptionPattern(String seasonalConsumptionPattern) { this.seasonalConsumptionPattern = seasonalConsumptionPattern; }
+
+    public int getDataPointCount() {
+        return dataPointCount;
+    }
+
+    public void setDataPointCount(int dataPointCount) {
+        this.dataPointCount = dataPointCount;
+    }
 }
 

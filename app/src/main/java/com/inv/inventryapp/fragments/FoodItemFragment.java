@@ -142,11 +142,20 @@ public class FoodItemFragment extends Fragment {
             executor.execute(() -> {
                 MainItemJoin itemToDisplay = null;
                 int finalItemIdToLoad = bundleItemId; // 初期値としてバンドルのitemIdを使用
+                boolean barcodeItemMismatch = false; // バーコードとIDの不一致フラグ
 
                 // 1. 受け取ったバーコードでアイテムを検索
                 if (receivedBarcode != null && !receivedBarcode.isEmpty()) {
                     itemToDisplay = BarcodeDao.getItemByBarcodeValue(receivedBarcode);
                     if (itemToDisplay != null && itemToDisplay.mainItem != null) {
+                        // バーコードから見つかったアイテムIDがバンドルのIDと異なる場合は警告フラグを立てる
+                        if (bundleItemId != -1 && bundleItemId != itemToDisplay.mainItem.getId()) {
+                            barcodeItemMismatch = true;
+                            Log.w("FoodItemFragment", "警告: バーコード " + receivedBarcode +
+                                  " から取得したアイテムID (" + itemToDisplay.mainItem.getId() +
+                                  ") がバンドルのアイテムID (" + bundleItemId + ") と一致しません。");
+                        }
+
                         finalItemIdToLoad = itemToDisplay.mainItem.getId(); // バーコードから得たIDを優先
                         this.barcode = receivedBarcode; // Fragmentのメンバー変数にセット
                         Log.d("FoodItemFragment", "バーコード '" + receivedBarcode + "' からアイテム取得: ID=" + finalItemIdToLoad + ", 名前=" + itemToDisplay.mainItem.getName());
@@ -177,13 +186,20 @@ public class FoodItemFragment extends Fragment {
                     }
                 }
 
-
                 // UI更新処理
                 if (itemToDisplay != null && itemToDisplay.mainItem != null && getActivity() != null) {
                     final MainItem item = itemToDisplay.mainItem;
                     final MainItemJoin finalItemToDisplay = itemToDisplay; // effectively final for lambda
+                    final boolean finalBarcodeItemMismatch = barcodeItemMismatch; // ラムダ式用のfinal変数
 
                     getActivity().runOnUiThread(() -> {
+                        // バーコードとアイテムIDの不一致が検出された場合は警告を表示
+                        if (finalBarcodeItemMismatch) {
+                            Toast.makeText(getContext(),
+                                "警告: バーコードと紐づくアイテムが異なります。バーコードの登録を確認してください。",
+                                Toast.LENGTH_LONG).show();
+                        }
+
                         nameEditText.setText(item.getName());
                         quantityEditText.setText(String.valueOf(item.getQuantity()));
                         if (item.getExpirationDate() != null) {
@@ -455,27 +471,58 @@ public class FoodItemFragment extends Fragment {
                     }
                     // バーコード情報の保存
                     if(this.barcode != null && !this.barcode.isEmpty()) {
-                        Barcode existingBarcode = BarcodeDao.getBarcodesForItem(finalCurrentItemId); // 外部キーで検索
-                        if (existingBarcode != null) {
-                            if(!existingBarcode.getBarcodeValue().equals(this.barcode)){ // バーコード値が異なる場合のみ更新
-                                existingBarcode.setBarcodeValue(this.barcode);
-                                BarcodeDao.update(existingBarcode);
-                                Log.d("FoodItemFragment_Save", "バーコード更新: ItemID=" + finalCurrentItemId + ", Value=" + this.barcode);
+                        // バーコード値を正規化（トリムして余分な空白を除去）
+                        String normalizedBarcode = this.barcode.trim();
+
+                        // まず、このバーコード値が他のアイテムで使用されていないか確認
+                        if (BarcodeDao.existsBarcodeValue(normalizedBarcode)) {
+                            // 既存のバーコードを取得
+                            Barcode existingBarcodeByValue = BarcodeDao.getBarcodeByValue(normalizedBarcode);
+
+                            // 別のアイテムに同じバーコードが登録されている場合は警告
+                            if (existingBarcodeByValue != null && existingBarcodeByValue.getItemId() != finalCurrentItemId) {
+                                Log.w("FoodItemFragment_Save", "警告: バーコード " + normalizedBarcode + " は既に別のアイテム(ID:" +
+                                     existingBarcodeByValue.getItemId() + ")に登録されています");
+
+                                // 既存のバーコードを削除
+                                BarcodeDao.delete(existingBarcodeByValue);
+                                Log.d("FoodItemFragment_Save", "重複バーコードを削除: ItemID=" +
+                                     existingBarcodeByValue.getItemId() + ", Value=" + normalizedBarcode);
+                            }
+                        }
+
+                        // このアイテム用のバーコードがあるか確認
+                        Barcode currentItemBarcode = BarcodeDao.getBarcodesForItem(finalCurrentItemId);
+
+                        if (currentItemBarcode != null) {
+                            // 既存のバーコードがある場合、値が異なれば更新
+                            if (!normalizedBarcode.equals(currentItemBarcode.getBarcodeValue())) {
+                                currentItemBarcode.setBarcodeValue(normalizedBarcode);
+                                BarcodeDao.update(currentItemBarcode);
+                                Log.d("FoodItemFragment_Save", "バーコード更新: ItemID=" + finalCurrentItemId +
+                                      ", 旧値=" + currentItemBarcode.getBarcodeValue() +
+                                      ", 新値=" + normalizedBarcode);
+                            } else {
+                                Log.d("FoodItemFragment_Save", "バーコードに変更なし: ItemID=" + finalCurrentItemId +
+                                      ", Value=" + normalizedBarcode);
                             }
                         } else {
+                            // 新規バーコード登録
                             Barcode newBarcode = new Barcode(
                                     finalCurrentItemId,
-                                    this.barcode
+                                    normalizedBarcode
                             );
                             BarcodeDao.insert(newBarcode);
-                            Log.d("FoodItemFragment_Save", "バーコード新規登録: ItemID=" + finalCurrentItemId + ", Value=" + this.barcode);
+                            Log.d("FoodItemFragment_Save", "バーコード新規登録: ItemID=" + finalCurrentItemId +
+                                  ", Value=" + normalizedBarcode);
                         }
                     } else {
-                        // バーコードが入力されていない場合、もし既存のバーコードがあれば削除する（オプション）
-                        // Barcode existingBarcode = BarcodeDao.getBarcodesForItem(finalCurrentItemId);
-                        // if (existingBarcode != null) {
-                        //     BarcodeDao.delete(existingBarcode);
-                        // }
+                        // バーコードが入力されていない場合、もし既存のバーコードがあれば削除する
+                        Barcode existingBarcode = BarcodeDao.getBarcodesForItem(finalCurrentItemId);
+                        if (existingBarcode != null) {
+                            BarcodeDao.delete(existingBarcode);
+                            Log.d("FoodItemFragment_Save", "バーコード削除: ItemID=" + finalCurrentItemId);
+                        }
                     }
 
 

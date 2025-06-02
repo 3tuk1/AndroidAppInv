@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
                 History.class,  // 履歴エンティティを追加
                 ItemAnalyticsData.class // 解析データエンティティを追加
         },
-        version = 17,  // バージョンを16に上げる
+        version = 19,  // バージョンを18に上げる（dataPointCountフィールド追加対応）
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)

@@ -4,7 +4,6 @@ import androidx.room.*;
 
 @Entity(
         tableName = "barcodes",
-        indices = {@Index(value = "item_id")},
         foreignKeys = @ForeignKey(
                 entity = MainItem.class,
                 parentColumns = "id",
@@ -13,16 +12,13 @@ import androidx.room.*;
         )
 )
 public class Barcode {
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
-    private int id;
-
+    // item_idを主キーとして設定（1アイテム1バーコードを保証）
+    @PrimaryKey
     @ColumnInfo(name = "item_id")
     private int itemId;
 
     @ColumnInfo(name = "barcode_value")
     private String barcodeValue;
-
 
     @ColumnInfo(name = "timestamp")
     private long timestamp;
@@ -34,17 +30,29 @@ public class Barcode {
         this.timestamp = System.currentTimeMillis();
     }
 
-    // ゲッター・セッター
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    // ゲッターとセッター
+    public int getItemId() {
+        return itemId;
+    }
 
-    public int getItemId() { return itemId; }
-    public void setItemId(int itemId) { this.itemId = itemId; }
+    public void setItemId(int itemId) {
+        this.itemId = itemId;
+    }
 
-    public String getBarcodeValue() { return barcodeValue; }
+    public String getBarcodeValue() {
+        return barcodeValue;
+    }
 
-    public void setBarcodeValue(String barcodeValue) { this.barcodeValue = barcodeValue; }
+    public void setBarcodeValue(String barcodeValue) {
+        this.barcodeValue = barcodeValue;
+    }
 
-    public long getTimestamp() { return timestamp; }
-    public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
 }
+

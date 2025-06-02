@@ -1,20 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark"
+    android:padding="16dp">
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/background_dark">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-    <TextView
-            android:layout_width="wrap_content"
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="設定画面"
-            android:textColor="@color/neon_green"
-            android:textSize="24sp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/background_dark"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="バーコードデータ管理"
+                    android:textColor="@color/neon_green"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:text="同じバーコードが複数のアイテムに紐づいている場合、スキャン時に問題が発生する可能性があります。以下の機能で重複チェック・修正ができます。"
+                    android:textColor="@color/white" />
+
+                <Button
+                    android:id="@+id/btn_detect_duplicate_barcodes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:backgroundTint="@color/blue"
+                    android:text="重複バーコードを検出"
+                    android:textColor="@color/white" />
+
+                <Button
+                    android:id="@+id/btn_cleanup_duplicate_barcodes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/soft_red"
+                    android:text="重複バーコードを修正"
+                    android:textColor="@color/white" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- 他の設定カテゴリをここに追加 -->
+
+    </LinearLayout>
+</ScrollView>
