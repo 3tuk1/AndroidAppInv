@@ -113,9 +113,4 @@ Androidネイティブ（Java）で開発された在庫管理アプリケーシ
 
 ## ライセンス
 
-このプロジェクトのライセンスは設定されていません。リポジトリに `LICENSE` ファイルを追加して、適切なオープンソースライセンス（例: MIT License, Apache License 2.0 など）を選択することを推奨します。
-[https://choosealicense.com/](https://choosealicense.com/) などのリソースを参考にしてください。
 
----
-
-このREADMEがプロジェクトの理解と利用に役立つことを願っています。
