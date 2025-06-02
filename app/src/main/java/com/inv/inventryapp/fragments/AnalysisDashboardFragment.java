@@ -58,6 +58,14 @@ public class AnalysisDashboardFragment extends Fragment {
         try {
             // カレンダー初期化処理
             calendarManager = ManageCalendar.getInstance();
+            if (calendarManager == null) { // calendarManagerのnullチェックを追加
+                Log.e(TAG, "ManageCalendar.getInstance() returned null");
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "カレンダーマネージャーの取得に失敗しました", Toast.LENGTH_SHORT).show();
+                }
+                return; // calendarManagerがnullなら処理を中断
+            }
+
             if (calendarView != null) {
                 calendarManager.setupCalendar(calendarView, view);
                 calendarManager.initializeCalendar(); // カレンダーのバインド処理を明示的に初期化
@@ -69,11 +77,14 @@ public class AnalysisDashboardFragment extends Fragment {
                 updateConsumptionPrediction(selectedDate);
             } else {
                 Log.e(TAG, "CalendarView is null");
+                if (getContext() != null) { // getContext() のnullチェックも追加
+                    Toast.makeText(getContext(), "カレンダービューの初期化に失敗しました。", Toast.LENGTH_SHORT).show();
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Calendar initialization error", e);
             if (getContext() != null) {
-                Toast.makeText(getContext(), "カレンダーの初期化に失敗しました", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "カレンダーの初期化中にエラーが発生しました: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         }
 

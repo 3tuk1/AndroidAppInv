@@ -1,5 +1,6 @@
 package com.inv.inventryapp.room;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -22,5 +23,7 @@ public interface ItemAnalyticsDataDao {
 
     @Query("SELECT * FROM item_analytics_data WHERE item_id = :itemId")
     ItemAnalyticsData getItemAnalyticsDataByItemId(int itemId);
-}
 
+    @Query("SELECT * FROM item_analytics_data WHERE item_id = :itemId")
+    LiveData<ItemAnalyticsData> getAnalyticsDataByItemIdLiveData(int itemId);
+}

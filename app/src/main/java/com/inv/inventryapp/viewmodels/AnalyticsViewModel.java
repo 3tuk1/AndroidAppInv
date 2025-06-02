@@ -61,7 +61,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
         ItemAnalyticsDataDao itemAnalyticsDataDao = db.itemAnalyticsDataDao();
         analyticsRepository = new AnalyticsRepository(historyDao, mainItemDao, categoryDao, itemAnalyticsDataDao);
         executorService = Executors.newSingleThreadExecutor();
-        allConsumptionHistory = analyticsRepository.getAllConsumptionHistory();
+        allConsumptionHistory = analyticsRepository.getAllOutputAndDeleteHistorySortedDesc();
     }
 
     public void loadConsumptionTrend(LocalDate startDate, LocalDate endDate, AnalyticsRepository.TrendPeriod period) {

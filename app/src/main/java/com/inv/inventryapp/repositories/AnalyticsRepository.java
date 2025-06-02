@@ -1,27 +1,25 @@
 package com.inv.inventryapp.repositories;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData; // MutableLiveData をインポート
+import androidx.lifecycle.MediatorLiveData;
+// MutableLiveData をインポート
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 
-import com.inv.inventryapp.models.Category;
-import com.inv.inventryapp.models.History;
-import com.inv.inventryapp.models.ItemAnalyticsData; // ItemAnalyticsData をインポート
-import com.inv.inventryapp.models.MainItem; // MainItem をインポート
-import com.inv.inventryapp.models.PrioritizedItem; // PrioritizedItem をインポート
-import com.inv.inventryapp.models.ShoppingListItem; // ShoppingListItem をインポート
+import com.inv.inventryapp.models.*;
+// PrioritizedItem をインポート
+// ShoppingListItem をインポート
 import com.inv.inventryapp.room.CategoryDao;
 import com.inv.inventryapp.room.HistoryDao;
 import com.inv.inventryapp.room.ItemAnalyticsDataDao; // ItemAnalyticsDataDao をインポート
 import com.inv.inventryapp.room.MainItemDao;
 
 import java.time.LocalDate;
+// Collections をインポート
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections; // Collections をインポート
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class AnalyticsRepository {
@@ -30,6 +28,7 @@ public class AnalyticsRepository {
     private MainItemDao mainItemDao;
     private CategoryDao categoryDao;
     private ItemAnalyticsDataDao itemAnalyticsDataDao; // ItemAnalyticsDataDao フィールドを追加
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor(); // バックグラウンド処理用のExecutorService
 
     public AnalyticsRepository(HistoryDao historyDao, MainItemDao mainItemDao, CategoryDao categoryDao, ItemAnalyticsDataDao itemAnalyticsDataDao) { // コンストラクタに ItemAnalyticsDataDao を追加
         this.historyDao = historyDao;
@@ -96,30 +95,125 @@ public class AnalyticsRepository {
      * @return LiveData<Map<String, Integer>> カテゴリ名と消費量のマップ
      */
     public LiveData<Map<String, Integer>> getCategoryConsumptionTrend(LocalDate startDate, LocalDate endDate) {
-        return Transformations.map(historyDao.getOutputHistoryByDateRange(startDate, endDate), historyList -> {
-            Map<String, Integer> categoryConsumptionMap = new HashMap<>();
-            if (historyList == null || historyList.isEmpty()) {
-                return categoryConsumptionMap;
-            }
-
-            Map<Integer, String> categoryIdToNameMap = new HashMap<>();
-            List<Category> allCategories = categoryDao.getAllCategories(); // 同期的に取得するか、LiveDataをチェインするか検討
-            if (allCategories != null) {
-                for (Category category : allCategories) {
-                    categoryIdToNameMap.put(category.getId(), category.getName());
+        MediatorLiveData<Map<String, Integer>> resultLiveData = new MediatorLiveData<>();
+        resultLiveData.addSource(historyDao.getOutputHistoryByDateRange(startDate, endDate), historyList -> {
+            executorService.execute(() -> {
+                Map<String, Integer> categoryConsumptionMap = new HashMap<>();
+                if (historyList == null || historyList.isEmpty()) {
+                    resultLiveData.postValue(categoryConsumptionMap);
+                    return;
                 }
-            }
 
-            for (History history : historyList) {
-                MainItem item = mainItemDao.findItemById(history.getItemId()); // 同期的に取得するか、LiveDataをチェインするか検討
-                if (item != null) {
-                    String categoryName = categoryIdToNameMap.getOrDefault(item.getCategoryId(), "不明なカテゴリ");
-                    categoryConsumptionMap.put(categoryName,
-                            categoryConsumptionMap.getOrDefault(categoryName, 0) + history.getQuantity());
+                Map<Integer, String> categoryIdToNameMap = new HashMap<>();
+                // バックグラウンドスレッドで実行
+                List<Category> allCategories = categoryDao.getAllCategories();
+                if (allCategories != null) {
+                    for (Category category : allCategories) {
+                        categoryIdToNameMap.put(category.getId(), category.getName());
+                    }
                 }
-            }
-            return categoryConsumptionMap;
+
+                for (History history : historyList) {
+                    // バックグラウンドスレッドで実行
+                    MainItem item = mainItemDao.findItemById(history.getItemId());
+                    if (item != null) {
+                        String categoryName = categoryIdToNameMap.getOrDefault(item.getCategoryId(), "不明なカテゴリ");
+                        categoryConsumptionMap.put(categoryName,
+                                categoryConsumptionMap.getOrDefault(categoryName, 0) + history.getQuantity());
+                    }
+                }
+                resultLiveData.postValue(categoryConsumptionMap);
+            });
         });
+        return resultLiveData;
+    }
+
+    /**
+     * 特定のアイテムの在庫切れ予測日を取得する
+     * @param itemId アイテムID
+     * @return LiveData<LocalDate> 在庫切れ予測日。予測できない場合はnull。
+     */
+    public LiveData<LocalDate> getStockoutPredictionDateForItem(int itemId) {
+        return Transformations.map(itemAnalyticsDataDao.getAnalyticsDataByItemIdLiveData(itemId), analyticsData -> {
+            if (analyticsData != null) {
+                return analyticsData.getStockoutPredictionDate();
+            }
+            return null;
+        });
+    }
+
+    /**
+     * 特定のアイテムの平均消費日数を取得する
+     * @param itemId アイテムID
+     * @return LiveData<Float> 平均消費日数。データがない場合は0。
+     */
+    public LiveData<Float> getAverageConsumptionDaysForItem(int itemId) {
+        return Transformations.map(itemAnalyticsDataDao.getAnalyticsDataByItemIdLiveData(itemId), analyticsData -> {
+            if (analyticsData != null) {
+                return analyticsData.getAverageConsumptionDays();
+            }
+            return 0f;
+        });
+    }
+
+    /**
+     * 特定の日に消費が予測される総量を取得する
+     * @param date 予測対象の日付
+     * @return LiveData<Double> その日の予測消費総量
+     */
+    public LiveData<Double> getDailyConsumptionPrediction(LocalDate date) {
+        MediatorLiveData<Double> resultLiveData = new MediatorLiveData<>();
+        resultLiveData.addSource(mainItemDao.getAllMainItemsLiveData(), allItems -> {
+            executorService.execute(() -> { // バックグラウンドスレッドで実行
+                double predictedConsumption = 0.0;
+                if (allItems == null || allItems.isEmpty()) {
+                    resultLiveData.postValue(0.0); // LiveDataに結果をpost
+                    return;
+                }
+
+                for (MainItem item : allItems) {
+                    // バックグラウンドスレッドで実行
+                    ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(item.getId());
+                    if (analyticsData != null) {
+                        // 1. 在庫切れ予測日に基づく予測
+                        if (analyticsData.getStockoutPredictionDate() != null && analyticsData.getStockoutPredictionDate().equals(date)) {
+                            predictedConsumption += item.getQuantity(); // その日に切れるなら現在の在庫が消費されると仮定
+                        }
+
+                        // 2. 平均消費日数に基づく予測
+                        if (analyticsData.getAverageConsumptionDays() > 0) {
+                            // 1単位を消費するのにかかる平均日数
+                            float avgDaysPerUnit = analyticsData.getAverageConsumptionDays();
+                            // 1日あたりの平均消費量
+                            double dailyConsumptionRate = 1.0 / avgDaysPerUnit;
+
+                            // その日に消費される予測量 (現在の在庫を超えない)
+                            double dailyPredictedForItem = Math.min(item.getQuantity(), dailyConsumptionRate);
+
+                            // 在庫切れ予測日と重複しないように、まだ加算されていない場合のみ加算
+                            // (より単純化するため、ここでは重複を許容して加算し、後で調整するアプローチも考えられる)
+                            // 今回は簡略化のため、在庫切れ予測日のロジックと独立して加算するが、
+                            // より正確には、在庫切れ予測で既に加算された分は除くべき。
+                            // ここでは、在庫切れ予測日でない場合にのみ平均消費量からの予測を加える
+                            if (analyticsData.getStockoutPredictionDate() == null || !analyticsData.getStockoutPredictionDate().equals(date)) {
+                                 predictedConsumption += dailyPredictedForItem;
+                            }
+                        }
+                    }
+                }
+                resultLiveData.postValue(predictedConsumption); // LiveDataに最終結果をpost
+            });
+        });
+        return resultLiveData;
+    }
+
+    /**
+     * 全ての出力履歴と削除履歴を日付の降順で取得する。
+     * HistoryDaoから直接LiveDataを取得する。
+     * @return 消費履歴のLiveData
+     */
+    public LiveData<List<History>> getAllOutputAndDeleteHistorySortedDesc() {
+        return historyDao.getAllOutputAndDeleteHistorySortedDesc();
     }
 
     /**
@@ -151,79 +245,6 @@ public class AnalyticsRepository {
 
             return (double) wastedQuantity / totalConsumedQuantity * 100;
         });
-    }
-
-    /**
-     * アイテムの平均消費日数を計算する（直近最大7回の消費イベントに基づく）
-     * @param outputHistory 対象アイテムの "output" 履歴リスト (日付の新しい順にソートされていること)
-     * @return 1単位あたりの平均消費日数。計算に必要なデータが不足している場合は0.0を返す。
-     */
-    public double calculateAverageConsumptionDays(List<History> outputHistory) {
-        if (outputHistory == null || outputHistory.isEmpty()) {
-            return 0.0; // 履歴がない
-        }
-
-        // 直近最大7回の消費履歴を取得 (outputHistory は新しい順を想定)
-        List<History> recentHistory = outputHistory.subList(0, Math.min(7, outputHistory.size()));
-
-        if (recentHistory.size() < 2) {
-            // 平均を計算するには最低2回の消費イベントが必要
-            return 0.0;
-        }
-
-        long totalQuantityConsumedInPeriod = 0;
-        for (History history : recentHistory) {
-            totalQuantityConsumedInPeriod += history.getQuantity();
-        }
-
-        if (totalQuantityConsumedInPeriod == 0) {
-            return 0.0; // 対象期間の消費量がない
-        }
-
-        // 期間内の最初と最後の日付を取得 (recentHistoryは新しい順なので、最後が最も古く、最初が最も新しい)
-        LocalDate firstDateInPeriod = recentHistory.get(recentHistory.size() - 1).getDate(); // 期間内の最も古い消費日
-        LocalDate lastDateInPeriod = recentHistory.get(0).getDate();         // 期間内の最も新しい消費日
-
-        long daysBetween = ChronoUnit.DAYS.between(firstDateInPeriod, lastDateInPeriod);
-
-        if (daysBetween <= 0) {
-            // 全ての消費が同日、または非常に短期間の場合
-            // 1日あたりの消費量から、1単位あたりの日数を計算 (例: 1日で5個消費なら、1/5 = 0.2日/個)
-            // totalQuantityConsumedInPeriod が 0 の場合は上で弾かれているので、ここでは常に正。
-            return 1.0 / totalQuantityConsumedInPeriod;
-        } else {
-            // 消費期間が1日以上ある場合
-            return (double) daysBetween / totalQuantityConsumedInPeriod;
-        }
-    }
-
-    /**
-     * 特定のアイテムの平均消費日数を計算し、ItemAnalyticsDataに保存・更新する。
-     * このメソッドはバックグラウンドスレッドで実行されることを想定しています。
-     * @param itemId 対象のアイテムID
-     */
-    public void updateAverageConsumptionDaysForItem(int itemId) {
-        List<History> outputHistory = historyDao.getOutputHistoryForItemDesc(itemId);
-        double avgDays = calculateAverageConsumptionDays(outputHistory);
-
-        ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(itemId);
-        if (analyticsData == null) {
-            analyticsData = new ItemAnalyticsData(
-                    itemId,
-                    null, // consumptionReason
-                    null, // consumptionTiming
-                    null, // consumptionPace
-                    0,    // minStockLevel
-                    0,    // optimalStockLevel
-                    null, // restockTimingGuideline
-                    (float) avgDays, // averageConsumptionDays
-                    null, // stockoutPredictionDate
-                    null  // seasonalConsumptionPattern
-            );
-        } else {
-            analyticsData.setAverageConsumptionDays((float) avgDays);
-        }
-        itemAnalyticsDataDao.insert(analyticsData); // OnConflictStrategy.REPLACE により、存在すれば更新、なければ挿入
     }
 
     /**
@@ -352,7 +373,7 @@ public class AnalyticsRepository {
             } else if (analyticsData.getMinStockLevel() > 0 && item.getQuantity() < analyticsData.getMinStockLevel()) { // 最適在庫未設定で、最低在庫レベルが設定され、それを下回っている場合
                 recommendedQuantity = Math.max(0, analyticsData.getMinStockLevel() - item.getQuantity());
             } else if (item.getQuantity() == 0) { // 在庫が0で、目標在庫レベルも未設定の場合
-                 recommendedQuantity = 1; // とりあえず1つ
+                recommendedQuantity = 1; // とりあえず1つ
             }
             // 上記以外（在庫があり、最低在庫レベル以上、または最低在庫レベル未設定）の場合は推奨購入量0のまま
 
@@ -378,12 +399,6 @@ public class AnalyticsRepository {
         return new MutableLiveData<>(prioritizedItems);
     }
 
-    /**
-     * 買い物リストを自動生成する。
-     * 優先購入アイテムリストを基に、実際に購入が必要なアイテムを抽出する。
-     * このメソッドはViewModelからバックグラウンドスレッドで呼び出されることを想定しています。
-     * @return LiveData<List<ShoppingListItem>> 生成された買い物リスト
-     */
     public LiveData<List<ShoppingListItem>> generateShoppingList() {
         // getPrioritizedPurchaseItems() は LiveData<List<PrioritizedItem>> を返す。
         // これを変換して LiveData<List<ShoppingListItem>> を得る。
@@ -424,14 +439,6 @@ public class AnalyticsRepository {
     }
 
     /**
-     * "output" または "delete" タイプの全消費履歴を日付の新しい順に取得する。
-     * @return LiveData<List<History>> 消費履歴のリスト
-     */
-    public LiveData<List<History>> getAllConsumptionHistory() {
-        return historyDao.getAllOutputAndDeleteHistorySortedDesc();
-    }
-
-    /**
      * 特定のアイテムを買い物リスト推奨から除外する
      * @param itemId 除外するアイテムのID
      */
@@ -464,51 +471,74 @@ public class AnalyticsRepository {
         }
     }
 
+
+    public void updateAverageConsumptionDaysForItem(int itemId) {
+        List<History> outputHistory = historyDao.getOutputHistoryForItemDesc(itemId);
+        double avgDays = calculateAverageConsumptionDays(outputHistory);
+
+        ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(itemId);
+        if (analyticsData == null) {
+            analyticsData = new ItemAnalyticsData(
+                    itemId,
+                    null, // consumptionReason
+                    null, // consumptionTiming
+                    null, // consumptionPace
+                    0,    // minStockLevel
+                    0,    // optimalStockLevel
+                    null, // restockTimingGuideline
+                    (float) avgDays, // averageConsumptionDays
+                    null, // stockoutPredictionDate
+                    null  // seasonalConsumptionPattern
+            );
+        } else {
+            analyticsData.setAverageConsumptionDays((float) avgDays);
+        }
+        itemAnalyticsDataDao.insert(analyticsData); // OnConflictStrategy.REPLACE により、存在すれば更新、なければ挿入
+    }
+
+
     /**
-     * 指定された日付の消費予測量を計算する。
-     * 予測ロジック:
-     * 1. その日に在庫切れが予測されるアイテムの現在の在庫量
-     * 2. 平均消費日数に基づいて、その日に消費されると予測される量 (現在の在庫量を超えない範囲で)
-     * @param date 予測対象の日付
-     * @return LiveData<Double> 予測される総消費量
+     * アイテムの平均消費日数を計算する（直近最大7回の消費イベントに基づく）
+     * @param outputHistory 対象アイテムの "output" 履歴リスト (日付の新しい順にソートされていること)
+     * @return 1単位あたりの平均消費日数。計算に必要なデータが不足している場合は0.0を返す。
      */
-    public LiveData<Double> getDailyConsumptionPrediction(LocalDate date) {
-        return Transformations.map(mainItemDao.getAllMainItemsLiveData(), allItems -> {
-            double predictedConsumption = 0.0;
-            if (allItems == null || allItems.isEmpty()) {
-                return 0.0;
-            }
+    public double calculateAverageConsumptionDays(List<History> outputHistory) {
+        if (outputHistory == null || outputHistory.isEmpty()) {
+            return 0.0; // 履歴がない
+        }
 
-            for (MainItem item : allItems) {
-                ItemAnalyticsData analyticsData = itemAnalyticsDataDao.getItemAnalyticsDataByItemId(item.getId());
-                if (analyticsData != null) {
-                    // 1. 在庫切れ予測日に基づく予測
-                    if (analyticsData.getStockoutPredictionDate() != null && analyticsData.getStockoutPredictionDate().equals(date)) {
-                        predictedConsumption += item.getQuantity(); // その日に切れるなら現在の在庫が消費されると仮定
-                    }
+        // 直近最大7回の消費履歴を取得 (outputHistory は新しい順を想定)
+        List<History> recentHistory = outputHistory.subList(0, Math.min(7, outputHistory.size()));
 
-                    // 2. 平均消費日数に基づく予測
-                    if (analyticsData.getAverageConsumptionDays() > 0) {
-                        // 1単位を消費するのにかかる平均日数
-                        float avgDaysPerUnit = analyticsData.getAverageConsumptionDays();
-                        // 1日あたりの平均消費量
-                        double dailyConsumptionRate = 1.0 / avgDaysPerUnit;
+        if (recentHistory.size() < 2) {
+            // 平均を計算するには最低2回の消費イベントが必要
+            return 0.0;
+        }
 
-                        // その日に消費される予測量 (現在の在庫を超えない)
-                        double dailyPredictedForItem = Math.min(item.getQuantity(), dailyConsumptionRate);
+        long totalQuantityConsumedInPeriod = 0;
+        for (History history : recentHistory) {
+            totalQuantityConsumedInPeriod += history.getQuantity();
+        }
 
-                        // 在庫切れ予測日と重複しないように、まだ加算されていない場合のみ加算
-                        // (より単純化するため、ここでは重複を許容して加算し、後で調整するアプローチも考えられる)
-                        // 今回は簡略化のため、在庫切れ予測日のロジックと独立して加算するが、
-                        // より正確には、在庫切れ予測で既に加算された分は除くべき。
-                        // ここでは、在庫切れ予測日でない場合にのみ平均消費量からの予測を加える
-                        if (analyticsData.getStockoutPredictionDate() == null || !analyticsData.getStockoutPredictionDate().equals(date)) {
-                             predictedConsumption += dailyPredictedForItem;
-                        }
-                    }
-                }
-            }
-            return predictedConsumption;
-        });
+        if (totalQuantityConsumedInPeriod == 0) {
+            return 0.0; // 対象期間の消費量がない
+        }
+
+        // 期間内の最初と最後の日付を取得 (recentHistoryは新しい順なので、最後が最も古く、最初が最も新しい)
+        LocalDate firstDateInPeriod = recentHistory.get(recentHistory.size() - 1).getDate(); // 期間内の最も古い消費日
+        LocalDate lastDateInPeriod = recentHistory.get(0).getDate();         // 期間内の最も新しい消費日
+
+        long daysBetween = ChronoUnit.DAYS.between(firstDateInPeriod, lastDateInPeriod);
+
+        if (daysBetween <= 0) {
+            // 全ての消費が同日、または非常に短期間の場合
+            // 1日あたりの消費量から、1単位あたりの日数を計算 (例: 1日で5個消費なら、1/5 = 0.2日/個)
+            // totalQuantityConsumedInPeriod が 0 の場合は上で弾かれているので、ここでは常に正。
+            return 1.0 / totalQuantityConsumedInPeriod;
+        } else {
+            // 消費期間が1日以上ある場合
+            return (double) daysBetween / totalQuantityConsumedInPeriod;
+        }
     }
 }
+
