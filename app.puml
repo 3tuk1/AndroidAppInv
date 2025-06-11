@@ -1,59 +1,261 @@
 @startuml
-package "個人用在庫管理APP" {
-    class MainActivity {
-        +onCreate()
-    }
 
-    class CameraActivity {
-        +openCamera()
-        +captureImage()
-    }
-
-    class BarcodeScanner {
-        +scanBarcode()
-        +getBarcodeData()
-    }
-
-    class ExpiryDateManager {
-        +checkExpiryDate()
-        +notifyUser()
-    }
-
-    class FoodItem {
-        -name: String
-        -barcode: String
-        -expiryDate: Date
-        -quantity: int
-        +save()
-        +update()
-        +delete()
-    }
-
-    class RoomDatabase {
-        +insertFoodItem(foodItem: FoodItem)
-        +updateFoodItem(foodItem: FoodItem)
-        +deleteFoodItem(foodItem: FoodItem)
-        +getAllFoodItems(): List<FoodItem>
-    }
-
-    class InventoryManager {
-        +addItem(foodItem: FoodItem)
-        +removeItem(foodItem: FoodItem)
-        +updateItemQuantity(foodItem: FoodItem, quantity: int)
-        +getInventory(): List<FoodItem>
-    }
-
-    class JanCodeAPI {
-        +searchProduct(janCode: String): String
-    }
-
-    MainActivity --> CameraActivity : uses
-    MainActivity --> BarcodeScanner : uses
-    MainActivity --> ExpiryDateManager : uses
-    MainActivity --> RoomDatabase : uses
-    MainActivity --> InventoryManager : uses
-    MainActivity --> JanCodeAPI : uses
-    RoomDatabase --> FoodItem : manages
-    InventoryManager --> FoodItem : manages
+' Model
+'
+class 商品 {
+    -productId: int
+    -name: String
+    -price: int
+    -quantity: int
+    -location: String
+    -expirationDate: LocalDate
+    -PurchaseDate: LocalDate
+    -productImage: String ' 保存しているディレクトリを指す
+    -productType: int
+    -barcodeNum: int
 }
+class barcode{
+    -barcodeId: int
+    -barcodeNum: int
+}
+class productType{
+    -TypeId: int
+    -productType: String
+}
+
+class 履歴{
+    -logId: int
+    -name: String
+    -type: String ' 追加、消費、廃棄のどれか
+    -date: LocalDate
+    -quantity: int
+}
+class 分析{
+    -productName: String
+    -priorityScore: float
+    -recommendQuantity: int
+    -remainingDays: float
+    -stockoutDate: LocalDate
+}
+class 買い物リスト{
+    -priority: int
+    -productName: String
+    -quantity: int
+}
+
+商品 "*" -- "*" barcode
+商品 "*" -- "*" productType
+
+' Repository
+' 商品レポジトリの変更履歴を履歴レポジトリに加えたいがレポジトリからレポジトリは依存が強くなってしまうためダメ。
+class 商品repository{
+    +getName(int productId)
+    +setName(int productId, String name)
+    +getPrice(int productId)
+    +setPrice(int productId, int price)
+    +getQuantity(int productId)
+    +setQuantity(int productId, int quantity)
+    +getLocation(int productId)
+    +setLocation(int productId, String location)
+    +getExpirationDate(int productId)
+    +setExpirationDate(int productId, LocalDate expirationDate)
+    +getPurchaseDate(int productId)
+    +setPurchaseDate(int productId, LocalDate purchaseDate)
+    +getProductImage(int productId)
+    +setProductImage(int productId)
+    +getProductType(int productId)
+    +setProductType(int productId,String productType)
+    +getBarcodeNum(int productId)
+    +setBarcodeNum(int productId,int barcodeNum)
+
+    +商品の削除(int productId)
+    +商品の追加(String Name)
+}
+商品 "*" -- "1" 商品repository
+barcode "*" -- "1" 商品repository
+productType "*" -- "1" 商品repository
+
+class 履歴repository{
+    +getName(int logId)
+    +setName(int logId,String Name)
+    +getType(int logId)
+    +setType(int logId,String Type)
+    +getDate(int logId,LocalDate date)
+    +setDate(int logId)
+    +getQuantity(int logId)
+    +setQuantity(int logId,int quantity)
+    +履歴の追加(String Name,String Type,LocalDate date,int quantity)
+    +履歴の削除(int logId)
+}
+商品 "*" -- "1" 履歴repository
+履歴 "*" -- "1" 履歴repository
+
+class 分析repository{
+    +分析情報の追加(String Name)
+    +分析情報の削除(String Name)
+    +getPriorityScore(String Name)
+    +setPriorityScore(String Name,float priorityScore)
+    +getRecommendQuantity(String Name)
+    +setRecommendQuantity(String Name,int recommendQuantity)
+    +getRemainingDays(String Name)
+    +setRemainingDays(String Name,float remainingDays)
+    +getStockoutDate(String Name)
+    +setStockoutDate(String Name,LocalDate stockoutDate)
+}
+分析 "*" -- "1" 分析repository
+
+class 買い物リストrepository{
+    +買い物リスト追加(String productName,int quantity)
+    +買い物リストから削除(int priority)
+    +getProductName(int priority)
+    +setProductName(int priority,String productName)
+    +getQuantity(int priority)
+    +setQuantity(int priority,int quantity)
+}
+買い物リスト "*" -- "1" 買い物リストrepository
+
+'View Model
+class 商品の追加編集{
+    -Xmlのライブデータ
+    +入力完了通知()
+    +削除通知(int productId)
+    -数量の増減の通知(String Name,int quantity,String Type) 'この中で履歴の保存を実行する
+}
+
+商品repository "1" -- "1" 商品の追加編集
+商品の追加編集フラグメント "1" -- "1" 商品の追加編集
+
+class 履歴の保存{
+    'usecase
+    +履歴の追加
+    +履歴の削除
+    +履歴の出力
+}
+class 買い物リスト_usecase {
+    'usecase
+    +買い物リストの追加(String productName,int quantity)
+    +買い物リストからの削除(int priority)
+    +買い物リストの出力()
+}
+商品の追加編集 "1" -- "1" 履歴の保存
+
+class ナビゲーションバーの関数{
+    +ホーム画面に移動する()
+    +貯金管理画面に移動する()
+    +設定画面に移動する()
+    +分析画面に移動する()
+}
+
+ナビゲーションバーの関数 "1" -- "1" ホーム画面
+ナビゲーションバーの関数 "1" -- "1" 貯金管理画面
+ナビゲーションバーの関数 "1" -- "1" 設定画面
+ナビゲーションバーの関数 "1" -- "1" 分析画面
+
+class カメラ起動{
+    +カメラ写真撮影を起動する()
+    +カメラバーコード読み取りを起動する()
+}
+カメラ起動 "1" -- "1" カメラ写真撮影
+カメラ起動 "1" -- "1" カメラバーコードリーダー
+
+class 消費の分析 {
+    +分析情報の追加()
+    +優先スコアの計算()
+    +おすすめの購入個数を計算()
+    +残りの日数の予測()
+    +在庫切れの予測()
+    -残り日数が7以下なら通知() ' 買い物リストに追加する
+}
+消費の分析 "1" -- "*" 買い物リスト_usecase
+買い物リスト_usecase "1" -- "1" 買い物リスト
+分析repository "1" -- "1" 消費の分析
+
+' View
+' 商品一つのFragmentの表示
+class 商品単一表示フラグメント{
+    -productId: int
+    -name: String
+    -quantity: int
+    -location: String
+    -expirationDate: String
+    -purchaseDate: String
+    +長押しによる削除()
+    +短押しによる編集()
+}
+class 商品の追加編集フラグメント{
+    -productId: int
+    -name : String
+    -quantity: int
+    -location: String
+    -expirationDate: String
+    -barcode: int
+    -productImage: Bitmap[]
+    -productType: int
+    +商品名の入力()
+    +商品の管理場所の入力()
+    +消費期限の入力()
+    +商品写真の入力()
+    +商品の種類の入力()
+    +商品の数量の入力()
+}
+
+class ナビゲーションバー{
+    +ホームボタン()
+    +貯金管理ボタン()
+    +設定画面ボタン()
+    +分析画面ボタン()
+}
+ナビゲーションバー "1" -- "1" ナビゲーションバーの関数
+
+class 追加ボタン{
+    +商品の追加ボタン()
+    +カメラ起動ボタン()
+}
+追加ボタン "1" -- "1" カメラ起動
+
+class カレンダー{
+    +選択()
+    +次の週へ()
+    +月表示切替()
+}
+class 円グラフ{
+    -totalMoney
+    -inputMoney
+    -outputMoney
+    -lostMoney
+}
+class 貯金管理画面{
+}
+貯金管理画面 -- 円グラフ
+
+class 設定画面{
+}
+class 分析画面{
+    -履歴のリスト表示()
+    -買い物リストの表示()
+}
+分析画面 -- カレンダー
+
+' 以下 アクション
+class ホーム画面{
+    -商品をリスト表示する()
+    -ソート機能()
+}
+ホーム画面 "1" -- "*" 商品単一表示フラグメント
+ホーム画面 "1" -- "1" 追加ボタン
+ホーム画面 "1" -- "1" ナビゲーションバー
+
+class カメラ写真撮影{
+    -写真の撮影()
+}
+
+class カメラバーコードリーダー{
+    -バーコード読み取り()
+}
+class カメラ初期化 {
+    +カメラ起動()
+}
+カメラ写真撮影 "1" -- "1" カメラ初期化
+カメラバーコードリーダー "1" -- "1" カメラ初期化
+
 @enduml
