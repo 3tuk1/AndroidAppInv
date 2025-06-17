@@ -12,15 +12,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // データベースの初期化
-        AppDatabase db = AppDatabase.getInstance(getApplicationContext());
 
-        // InvHomeを起動
-        Intent intent = new Intent(MainActivity.this, com.inv.inventryapp.GUI.InvHome.class);
-        startActivity(intent);
-
-        // MainActivityを終了して戻らないようにする
-        finish();
     }
 
 }

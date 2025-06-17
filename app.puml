@@ -2,289 +2,286 @@
 
 ' Model
 '
-class 商品 {
-    -商品ID: int
-    -商品名: String
-    -価格: int
-    -数量: int
-    -保管場所: String
-    -賞味期限: LocalDate
-    -購入日: LocalDate
-    -商品画像: String ' 保存しているディレクトリを指す
-    -商品種別: int
-    -バーコード番号: int
+class Product {
+    -productId: int
+    -productName: String
+    -price: int
+    -quantity: int
+    -location: String
+    -expirationDate: LocalDate
+    -purchaseDate: LocalDate
+    -imagePath: String
+    -categoryId: int
+    -barcodeNumber: int
 }
-class バーコード{
-    -バーコードID: int
-    -バーコード番号: int
+class Barcode {
+    -barcodeId: int
+    -barcodeNumber: int
 }
-class 商品種別{
-    -種別ID: int
-    -種別名: String
-}
-
-class 履歴{
-    -履歴ID: int
-    -商品名: String
-    -種別: String ' 追加、消費、廃棄のどれか
-    -日付: LocalDate
-    -数量: int
-}
-class 分析{
-    -商品名: String
-    -優先度スコア: float
-    -推奨数量: int
-    -残日数: float
-    -欠品日: LocalDate
-}
-class 買い物リスト{
-    -優先度: int
-    -商品名: String
-    -数量: int
+class ProductCategory {
+    -categoryId: int
+    -categoryName: String
 }
 
-商品 "*" -- "*" バーコード
-商品 "*" -- "*" 商品種別
+class History {
+    -historyId: int
+    -productName: String
+    -type: String ' add, consume, discard
+    -date: LocalDate
+    -quantity: int
+}
+class Analysis {
+    -productName: String
+    -priorityScore: float
+    -recommendedQuantity: int
+    -remainingDays: float
+    -outOfStockDate: LocalDate
+}
+class ShoppingList {
+    -priority: int
+    -productName: String
+    -quantity: int
+}
+
+Product "*" -- "*" Barcode
+Product "*" -- "*" ProductCategory
 
 ' Repository
-' 商品レポジトリの変更履歴を履歴レポジトリに加えたいがレポジトリからレポジトリは依存が強くなってしまうためダメ。
-class 商品レポジトリ{
-    +商品名取得(int 商品ID)
-    +商品名設定(int 商品ID, String 商品名)
-    +価格取得(int 商品ID)
-    +価格設定(int 商品ID, int 価格)
-    +数量取得(int 商品ID)
-    +数量設定(int 商品ID, int 数量)
-    +保管場所取得(int 商品ID)
-    +保管場所設定(int 商品ID, String 保管場所)
-    +賞味期限取得(int 商品ID)
-    +賞味期限設定(int 商品ID, LocalDate 賞味期限)
-    +購入日取得(int 商品ID)
-    +購入日設定(int 商品ID, LocalDate 購入日)
-    +商品画像取得(int 商品ID)
-    +商品画像設定(int 商品ID)
-    +商品種別取得(int 商品ID)
-    +商品種別設定(int 商品ID,String 商品種別)
-    +バーコード番号取得(int 商品ID)
-    +バーコード番号設定(int 商品ID,int バーコード番号)
-
-    +商品の削除(int 商品ID)
-    +商品の追加(String 商品名)
+class ProductRepository {
+    +getProductName(int productId)
+    +setProductName(int productId, String productName)
+    +getPrice(int productId)
+    +setPrice(int productId, int price)
+    +getQuantity(int productId)
+    +setQuantity(int productId, int quantity)
+    +getLocation(int productId)
+    +setLocation(int productId, String location)
+    +getExpirationDate(int productId)
+    +setExpirationDate(int productId, LocalDate expirationDate)
+    +getPurchaseDate(int productId)
+    +setPurchaseDate(int productId, LocalDate purchaseDate)
+    +getImagePath(int productId)
+    +setImagePath(int productId, String imagePath)
+    +getCategoryId(int productId)
+    +setCategoryId(int productId, int categoryId)
+    +getBarcodeNumber(int productId)
+    +setBarcodeNumber(int productId, int barcodeNumber)
+    +deleteProduct(int productId)
+    +addProduct(String productName)
 }
-商品 "*" -- "1" 商品レポジトリ
-バーコード "*" -- "1" 商品レポジトリ
-商品種別 "*" -- "1" 商品レポジトリ
+Product "*" -- "1" ProductRepository
+Barcode "*" -- "1" ProductRepository
+ProductCategory "*" -- "1" ProductRepository
 
-class 履歴レポジトリ{
-    +商品名取得(int 履歴ID)
-    +商品名設定(int 履歴ID,String 商品名)
-    +種別取得(int 履歴ID)
-    +種別設定(int 履歴ID,String 種別)
-    +日付取得(int 履歴ID,LocalDate 日付)
-    +日付設定(int 履歴ID)
-    +数量取得(int 履歴ID)
-    +数量設定(int 履歴ID,int 数量)
-    +履歴の追加(String 商品名,String 種別,LocalDate 日付,int 数量)
-    +履歴の削除(int 履歴ID)
+class HistoryRepository {
+    +getProductName(int historyId)
+    +setProductName(int historyId, String productName)
+    +getType(int historyId)
+    +setType(int historyId, String type)
+    +getDate(int historyId)
+    +setDate(int historyId, LocalDate date)
+    +getQuantity(int historyId)
+    +setQuantity(int historyId, int quantity)
+    +addHistory(String productName, String type, LocalDate date, int quantity)
+    +deleteHistory(int historyId)
 }
-商品 "*" -- "1" 履歴レポジトリ
-履歴 "*" -- "1" 履歴レポジトリ
+Product "*" -- "1" HistoryRepository
+History "*" -- "1" HistoryRepository
 
-class 分析レポジトリ{
-    +分析情報の追加(String 商品名)
-    +分析情報の削除(String 商品名)
-    +優先度スコア取得(String 商品名)
-    +優先度スコア設定(String 商品名,float 優先度スコア)
-    +推奨数量取得(String 商品名)
-    +推奨数量設定(String 商品名,int 推奨数量)
-    +残日数取得(String 商品名)
-    +残日数設定(String 商品名,float 残日数)
-    +欠品日取得(String 商品名)
-    +欠品日設定(String 商品名,LocalDate 欠品日)
+class AnalysisRepository {
+    +addAnalysis(String productName)
+    +deleteAnalysis(String productName)
+    +getPriorityScore(String productName)
+    +setPriorityScore(String productName, float priorityScore)
+    +getRecommendedQuantity(String productName)
+    +setRecommendedQuantity(String productName, int recommendedQuantity)
+    +getRemainingDays(String productName)
+    +setRemainingDays(String productName, float remainingDays)
+    +getOutOfStockDate(String productName)
+    +setOutOfStockDate(String productName, LocalDate outOfStockDate)
 }
-分析 "*" -- "1" 分析レポジトリ
+Analysis "*" -- "1" AnalysisRepository
 
-class 買い物リストレポジトリ{
-    +買い物リスト追加(String 商品名,int 数量)
-    +買い物リストから削除(int 優先度)
-    +商品名取得(int 優先度)
-    +商品名設定(int 優先度,String 商品名)
-    +数量取得(int 優先度)
-    +数量設定(int 優先度,int 数量)
+class ShoppingListRepository {
+    +addShoppingList(String productName, int quantity)
+    +removeFromShoppingList(int priority)
+    +getProductName(int priority)
+    +setProductName(int priority, String productName)
+    +getQuantity(int priority)
+    +setQuantity(int priority, int quantity)
 }
-買い物リスト "*" -- "1" 買い物リストレポジトリ
+ShoppingList "*" -- "1" ShoppingListRepository
 
 'View Model
-class 商品の追加編集ViewModel{
-    -Xmlのライブデータ
-    +入力完了通知()
-    +削除通知(int 商品ID)
-    -数量の増減の通知(String 商品名,int 数量,String 種別) 'この中で履歴の保存を実行する
+class ProductEditViewModel{
+    -xmlLiveData
+    +onInputComplete()
+    +onDelete(int productId)
+    -onQuantityChanged(String productName, int quantity, String type)
 }
+ProductRepository "1" -- "1" ProductEditViewModel
+ProductEditFragmentView "1" -- "1" ProductEditViewModel
 
-商品レポジトリ "1" -- "1" 商品の追加編集ViewModel
-商品の追加編集フラグメントView "1" -- "1" 商品の追加編集ViewModel
-
-class 履歴保存UseCase{
-    +履歴の追加
-    +履歴の削除
-    +履歴の出力
+class HistoryUseCase{
+    +addHistory()
+    +deleteHistory()
+    +exportHistory()
 }
-class 買い物リストUseCase {
-    +買い物リストの追加(String 商品名,int 数量)
-    +買い物リストからの削除(int 優先度)
-    +買い物リストの出力()
+class ShoppingListUseCase {
+    +addShoppingList(String productName, int quantity)
+    +removeFromShoppingList(int priority)
+    +exportShoppingList()
 }
-商品の追加編集ViewModel "1" -- "1" 履歴保存UseCase
+ProductEditViewModel "1" -- "1" HistoryUseCase
 
-class ナビゲーションバー関数ViewModel{
-    +ホーム画面に移動する()
-    +貯金管理画面に移動する()
-    +設定画面に移動する()
-    +分析画面に移動する()
+class NavigationBarViewModel{
+    +navigateToHome()
+    +navigateToSavings()
+    +navigateToSettings()
+    +navigateToAnalysis()
 }
+NavigationBarViewModel "1" -- "1" HomeView
+NavigationBarViewModel "1" -- "1" SavingsView
+NavigationBarViewModel "1" -- "1" SettingsView
+NavigationBarViewModel "1" -- "1" AnalysisView
 
-ナビゲーションバー関数ViewModel "1" -- "1" ホーム画面View
-ナビゲーションバー関数ViewModel "1" -- "1" 貯金管理画面View
-ナビゲーションバー関数ViewModel "1" -- "1" 設定画面View
-ナビゲーションバー関数ViewModel "1" -- "1" 分析画面View
-
-class カメラ起動ViewModel{
-    +カメラ写真撮影を起動する()
-    +カメラバーコード読み取りを起動する()
+class CameraViewModel{
+    +startCameraPhoto()
+    +startCameraBarcode()
 }
-カメラ起動ViewModel "1" -- "1" カメラ写真撮影View
-カメラ起動ViewModel "1" -- "1" カメラバーコードリーダーView
+CameraViewModel "1" -- "1" CameraPhotoView
+CameraViewModel "1" -- "1" CameraBarcodeReaderView
 
-class 消費分析UseCase {
-    +分析情報の追加()
-    +優先スコアの計算()
-    +おすすめの購入個数を計算()
-    +残りの日数の予測()
-    +在庫切れの予測()
-    -残り日数が7以下なら通知() ' 買い物リストに追加する
+class ConsumptionAnalysisUseCase {
+    +addAnalysisInfo()
+    +calculatePriorityScore()
+    +calculateRecommendedPurchase()
+    +predictRemainingDays()
+    +predictOutOfStock()
+    -notifyIfLowDays()
 }
-消費分析UseCase "1" -- "*" 買い物リストUseCase
-買い物リストUseCase "1" -- "1" 買い物リストレポジトリ
-分析レポジトリ "1" -- "1" 消費分析UseCase
+ConsumptionAnalysisUseCase "1" -- "*" ShoppingListUseCase
+ShoppingListUseCase "1" -- "1" ShoppingListRepository
+AnalysisRepository "1" -- "1" ConsumptionAnalysisUseCase
 
 ' View
-' 商品一つのFragmentの表示
-class 商品単一表示フラグメントView{
-    -商品ID: int
-    -商品名: String
-    -数量: int
-    -保管場所: String
-    -賞味期限: String
-    -購入日: String
-    +長押しによる削除()
-    +短押しによる編集()
+class ProductItemFragmentView{
+    -productId: int
+    -productName: String
+    -quantity: int
+    -location: String
+    -expirationDate: String
+    -purchaseDate: String
+    +onLongPressDelete()
+    +onShortPressEdit()
 }
-class 商品の追加編集フラグメントView{
-    -商品ID: int
-    -商品名 : String
-    -数量: int
-    -保管場所: String
-    -賞味期限: String
-    -バーコード: int
-    -商品画像: Bitmap[]
-    -商品種別: int
-    +商品名の入力()
-    +商品の管理場所の入力()
-    +消費期限の入力()
-    +商品写真の入力()
-    +商品の種類の入力()
-    +商品の数量の入力()
+class ProductEditFragmentView{
+    -productId: int
+    -productName : String
+    -quantity: int
+    -location: String
+    -expirationDate: String
+    -barcode: int
+    -image: Bitmap[]
+    -categoryId: int
+    +inputProductName()
+    +inputLocation()
+    +inputExpirationDate()
+    +inputImage()
+    +inputCategory()
+    +inputQuantity()
 }
 
-class ナビゲーションバーView{
-    +ホームボタン()
-    +貯金管理ボタン()
-    +設定画面ボタン()
-    +分析画面ボタン()
+class NavigationBarView{
+    +homeButton()
+    +savingsButton()
+    +settingsButton()
+    +analysisButton()
 }
-ナビゲーションバーView "1" -- "1" ナビゲーションバー関数ViewModel
+NavigationBarView "1" -- "1" NavigationBarViewModel
 
-class 追加ボタンView{
-    +商品の追加ボタン()
-    +カメラ起動ボタン()
+class AddButtonView{
+    +addProductButton()
+    +startCameraButton()
 }
-追加ボタンView "1" -- "1" カメラ起動ViewModel
+AddButtonView "1" -- "1" CameraViewModel
 
-class カレンダーView{
-    +選択()
-    +次の週へ()
-    +月表示切替()
+class CalendarView{
+    +select()
+    +nextWeek()
+    +switchMonth()
 }
-class 円グラフView{
+class PieChartView{
     -totalMoney
     -inputMoney
     -outputMoney
     -lostMoney
 }
 
-class 貯金管理画面ViewModel {
-    +円グラフデータ取得()
-    +円グラフ更新()
+class SavingsViewModel {
+    +getPieChartData()
+    +updatePieChart()
 }
 
-class 貯金管理画面View{
+class SavingsView{
 }
-貯金管理画面View -- 貯金管理画面ViewModel
-貯金管理画面ViewModel -- 円グラフView
+SavingsView -- SavingsViewModel
+SavingsViewModel -- PieChartView
 
-class 設定画面ViewModel {
+class SettingsViewModel {
 }
-class 設定画面View{
+class SettingsView{
 }
-設定画面View -- 設定画面ViewModel
+SettingsView -- SettingsViewModel
 
-class 分析画面ViewModel {
-    +履歴リスト取得()
-    +買い物リスト取得()
+class AnalysisViewModel {
+    +getHistoryList()
+    +getShoppingList()
 }
-class 分析画面View{
+class AnalysisView{
 }
-分析画面View -- 分析画面ViewModel
-分析画面ViewModel -- カレンダーView
+AnalysisView -- AnalysisViewModel
+AnalysisViewModel -- CalendarView
 
-class ホーム画面ViewModel {
-    +商品リスト取得()
-    +ソート()
+class HomeViewModel {
+    +getProductList()
+    +sort()
 }
-class ホーム画面View{
-    -商品をリスト表示する()
-    -ソート機能()
+class HomeView{
+    -showProductList()
+    -sortFunction()
 }
-ホーム画面View -- ホーム画面ViewModel
-ホーム画面ViewModel -- 商品単一表示フラグメントView
-ホーム画面ViewModel -- 追加ボタンView
-ホーム画面ViewModel -- ナビゲーションバーView
+HomeView -- HomeViewModel
+HomeViewModel -- ProductItemFragmentView
+HomeViewModel -- AddButtonView
+HomeViewModel -- NavigationBarView
 
-class カメラ写真撮影View{
-    -写真の撮影()
+class CameraPhotoView{
+    -takePhoto()
 }
-class カメラバーコードリーダーView{
-    -バーコード読み取り()
+class CameraBarcodeReaderView{
+    -readBarcode()
 }
-class カメラ初期化View {
-    +カメラ起動()
+class CameraInitView {
+    +initCamera()
 }
-カメラ写真撮影View "1" -- "1" カメラ初期化View
-カメラバーコードリーダーView "1" -- "1" カメラ初期化View
+CameraPhotoView "1" -- "1" CameraInitView
+CameraBarcodeReaderView "1" -- "1" CameraInitView
 
-class 円グラフデータ作成UseCase{
-    +円グラフのデータを作成()
-    +円グラフのデータを更新()
+class PieChartDataUseCase{
+    +createPieChartData()
+    +updatePieChartData()
 }
-貯金管理画面ViewModel -- 円グラフデータ作成UseCase
-履歴レポジトリ -- 円グラフデータ作成UseCase
+SavingsViewModel -- PieChartDataUseCase
+HistoryRepository -- PieChartDataUseCase
 
-class カレンダーへのデータ登録UseCase{
-    +カレンダーに履歴を登録()
-    +カレンダーに消費予想を登録()
+class CalendarDataRegisterUseCase{
+    +registerHistoryToCalendar()
+    +registerPredictionToCalendar()
 }
-分析画面ViewModel -- カレンダーへのデータ登録UseCase
-分析レポジトリ -- カレンダーへのデータ登録UseCase
+AnalysisViewModel -- CalendarDataRegisterUseCase
+AnalysisRepository -- CalendarDataRegisterUseCase
+AnalysisView -- CalendarView
+SavingsView -- PieChartView
 
 @enduml
