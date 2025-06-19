@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#2B2B2B">
+
+
+    <!-- 商品名 -->
+    <EditText
+        android:id="@+id/editTextProductName"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="商品名"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_text_primary"
+        android:textColorHint="@color/intellij_text_hint"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        android:layout_marginTop="16dp"/>
+
+    <!-- 価格 -->
+    <EditText
+        android:id="@+id/editTextPrice"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="価格"
+        android:inputType="number"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_text_primary"
+        android:textColorHint="@color/intellij_text_hint"
+        app:layout_constraintTop_toBottomOf="@id/editTextProductName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- 数量 -->
+    <EditText
+        android:id="@+id/editTextQuantity"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="数量"
+        android:inputType="number"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_text_primary"
+        android:textColorHint="@color/intellij_text_hint"
+        app:layout_constraintTop_toBottomOf="@id/editTextPrice"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- 場所 -->
+    <EditText
+        android:id="@+id/editTextLocation"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="場所"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_text_primary"
+        android:textColorHint="@color/intellij_text_hint"
+        app:layout_constraintTop_toBottomOf="@id/editTextQuantity"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- 賞味期限 -->
+    <EditText
+        android:id="@+id/editTextExpirationDate"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="賞味期限"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_text_primary"
+        android:textColorHint="@color/intellij_text_hint"
+        app:layout_constraintTop_toBottomOf="@id/editTextLocation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- 購入日 -->
+    <EditText
+        android:id="@+id/editTextPurchaseDate"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="購入日"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_text_primary"
+        android:textColorHint="@color/intellij_text_hint"
+        app:layout_constraintTop_toBottomOf="@id/editTextExpirationDate"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- 画像 -->
+    <ImageView
+        android:id="@+id/imageViewProduct"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:contentDescription="商品画像"
+        android:background="@color/intellij_surface"
+        app:layout_constraintTop_toBottomOf="@id/editTextPurchaseDate"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"/>
+
+    <!-- カテゴリ -->
+    <Spinner
+        android:id="@+id/spinnerCategory"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:background="@color/intellij_surface"
+        app:layout_constraintTop_toBottomOf="@id/imageViewProduct"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"/>
+
+    <!-- バーコード -->
+    <EditText
+        android:id="@+id/editTextBarcode"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="バーコード"
+        android:inputType="number"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_text_primary"
+        android:textColorHint="@color/intellij_text_hint"
+        app:layout_constraintTop_toBottomOf="@id/spinnerCategory"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- 保存ボタン -->
+    <Button
+        android:id="@+id/buttonSave"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:minWidth="120dp"
+        android:text="保存"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_button_text"
+        app:layout_constraintTop_toBottomOf="@id/editTextBarcode"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"/>
+
+    <!-- 削除ボタン -->
+    <Button
+        android:id="@+id/buttonDelete"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:minWidth="120dp"
+        android:text="削除"
+        android:background="@color/intellij_surface"
+        android:textColor="@color/intellij_button_text"
+        app:layout_constraintTop_toBottomOf="@id/buttonSave"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
