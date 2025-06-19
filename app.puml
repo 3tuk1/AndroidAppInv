@@ -38,6 +38,7 @@ class Analysis {
     -outOfStockDate: LocalDate
 }
 class ShoppingList {
+    -listId: int
     -priority: int
     -productName: String
     -quantity: int
@@ -48,67 +49,38 @@ Product "*" -- "*" ProductCategory
 
 ' Repository
 class ProductRepository {
-    +getProductName(int productId)
-    +setProductName(int productId, String productName)
-    +getPrice(int productId)
-    +setPrice(int productId, int price)
-    +getQuantity(int productId)
-    +setQuantity(int productId, int quantity)
-    +getLocation(int productId)
-    +setLocation(int productId, String location)
-    +getExpirationDate(int productId)
-    +setExpirationDate(int productId, LocalDate expirationDate)
-    +getPurchaseDate(int productId)
-    +setPurchaseDate(int productId, LocalDate purchaseDate)
-    +getImagePath(int productId)
-    +setImagePath(int productId, String imagePath)
-    +getCategoryId(int productId)
-    +setCategoryId(int productId, int categoryId)
-    +getBarcodeNumber(int productId)
-    +setBarcodeNumber(int productId, int barcodeNumber)
-    +deleteProduct(int productId)
-    +addProduct(String productName)
+    +updateProduct(product Product)
+    +deleteProduct(product Product)
+    +addProduct(String productName, int price, int quantity,
+    String location, LocalDate expirationDate, LocalDate purchaseDate,
+    String imagePath, int categoryId, int barcodeNumber)
 }
 Product "*" -- "1" ProductRepository
 Barcode "*" -- "1" ProductRepository
 ProductCategory "*" -- "1" ProductRepository
 
 class HistoryRepository {
-    +getProductName(int historyId)
-    +setProductName(int historyId, String productName)
-    +getType(int historyId)
-    +setType(int historyId, String type)
-    +getDate(int historyId)
-    +setDate(int historyId, LocalDate date)
-    +getQuantity(int historyId)
-    +setQuantity(int historyId, int quantity)
+    +updateHistory(History history)
     +addHistory(String productName, String type, LocalDate date, int quantity)
-    +deleteHistory(int historyId)
+    +deleteHistory(History history)
 }
 Product "*" -- "1" HistoryRepository
 History "*" -- "1" HistoryRepository
 
 class AnalysisRepository {
     +addAnalysis(String productName)
-    +deleteAnalysis(String productName)
-    +getPriorityScore(String productName)
-    +setPriorityScore(String productName, float priorityScore)
-    +getRecommendedQuantity(String productName)
-    +setRecommendedQuantity(String productName, int recommendedQuantity)
-    +getRemainingDays(String productName)
-    +setRemainingDays(String productName, float remainingDays)
-    +getOutOfStockDate(String productName)
-    +setOutOfStockDate(String productName, LocalDate outOfStockDate)
+    +deleteAnalysis(Analysis analysis)
+    +updateAnalysis(Analysis analysis)
 }
 Analysis "*" -- "1" AnalysisRepository
 
 class ShoppingListRepository {
     +addShoppingList(String productName, int quantity)
-    +removeFromShoppingList(int priority)
-    +getProductName(int priority)
-    +setProductName(int priority, String productName)
-    +getQuantity(int priority)
-    +setQuantity(int priority, int quantity)
+    +removeFromShoppingList(int listId)
+    +exportShoppingList()
+    +getShoppingList()
+    +setShoppingList(ShoppingList shoppingList)
+
 }
 ShoppingList "*" -- "1" ShoppingListRepository
 

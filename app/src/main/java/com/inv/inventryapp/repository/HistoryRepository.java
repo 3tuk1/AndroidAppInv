@@ -1,6 +1,29 @@
 package com.inv.inventryapp.repository;
 
-public class HistoryRepository {
-    // ...existing code...
-}
+import android.content.Context;
+import com.inv.inventryapp.model.ModelDatabase;
+import com.inv.inventryapp.model.dao.HistoryDao;
+import com.inv.inventryapp.model.entity.History;
+import java.time.LocalDate;
 
+public class HistoryRepository {
+    private final HistoryDao historyDao;
+
+    public HistoryRepository(Context context) {
+        ModelDatabase db = ModelDatabase.getInstance(context);
+        this.historyDao = db.historyDao();
+    }
+
+    public void addHistory(String productName, String type, LocalDate date, int quantity) {
+        History history = new History(productName, type, date, quantity);
+        historyDao.insert(history);
+    }
+
+    public void updateHistory(History history) {
+        historyDao.update(history);
+    }
+
+    public void deleteHistory(History history) {
+        historyDao.delete(history);
+    }
+}
