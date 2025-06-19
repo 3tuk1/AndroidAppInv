@@ -21,5 +21,13 @@ public interface ProductCategoryDao {
 
     @Query("SELECT * FROM product_category")
     List<ProductCategory> getAll();
+
+    // カテゴリ名からカテゴリを取得
+    @Query("SELECT * FROM product_category WHERE name = :name LIMIT 1")
+    ProductCategory getByName(String name);
+
+    // カテゴリ名の存在チェック
+    @Query("SELECT EXISTS(SELECT 1 FROM product_category WHERE name = :name)")
+    boolean exists(String name);
 }
 
