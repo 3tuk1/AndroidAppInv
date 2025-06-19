@@ -32,3 +32,5 @@ reports/
 /captures
 .externalNativeBuild
 .cxx
+
+# local.propertiesの除外

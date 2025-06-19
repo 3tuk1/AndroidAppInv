@@ -1,4 +1,4 @@
-package com.inv.inventryapp.view
+package com.inv.inventryapp.view.saving
 
 import androidx.fragment.app.Fragment
 
