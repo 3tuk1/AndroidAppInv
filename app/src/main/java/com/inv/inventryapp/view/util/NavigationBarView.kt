@@ -1,4 +1,4 @@
-package com.inv.inventryapp.view
+package com.inv.inventryapp.view.util
 
 import android.view.View
 

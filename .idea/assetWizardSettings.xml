@@ -92,7 +92,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="C:\Users\kokej\Pictures\ic_launcher.png" />
+                                                <entry key="imagePath" value="C:\Users\kokej\Pictures\gazou\画像1.png" />
                                                 <entry key="scalingPercent" value="116" />
                                                 <entry key="trimmed" value="true" />
                                               </map>
@@ -128,8 +128,8 @@
                                     <map>
                                       <entry key="backgroundAssetType" value="COLOR" />
                                       <entry key="backgroundColor" value="3ddcbf" />
-                                      <entry key="foregroundAssetType" value="CLIP_ART" />
-                                      <entry key="outputName" value="baseline_camera_alt_24" />
+                                      <entry key="foregroundLayerName" value="ic_stock_manager_icon" />
+                                      <entry key="outputName" value="ic_stock_manager" />
                                     </map>
                                   </option>
                                 </PersistentState>

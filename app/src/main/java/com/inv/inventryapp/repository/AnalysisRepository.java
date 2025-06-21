@@ -14,19 +14,21 @@ public class AnalysisRepository {
      * ModelDatabaseからAnalysisDaoを取得して初期化する役割を持っています。
      */
     public AnalysisRepository(Context context) {
-        ModelDatabase db = ModelDatabase.getInstance(context);
+        ModelDatabase db = ModelDatabase.Companion.getInstance(context);
         this.analysisDao = db.analysisDao();
     }
 
     /**
      * 新しい分析を追加するメソッド
      *
-     * @param productName 分析対象の製品名
+     * @param analysis 追加する分析オブジェクト
      */
-    public void addAnalysis(String productName) {
-        Analysis analysis = new Analysis(productName, 0f, 0, 0f, null);
+    public void addAnalysis(Analysis analysis) {
         analysisDao.insert(analysis);
     }
+
+
+
 
     /**
      * 分析を削除するメソッド

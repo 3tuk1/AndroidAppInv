@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'com.inv.inventryapp'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         javaCompileOptions {
@@ -15,7 +15,7 @@ android {
         }
         applicationId "com.inv.inventryapp"
         minSdk 29
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0"
         multiDexEnabled true // 追加：大きなアプリ用
@@ -77,6 +77,9 @@ dependencies {
 
     // --- テスト ---
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:4.5.1'
+    testImplementation 'org.mockito.kotlin:mockito-kotlin:4.0.0'
+    testImplementation 'androidx.arch.core:core-testing:2.2.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }

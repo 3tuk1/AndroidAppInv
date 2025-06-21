@@ -10,7 +10,7 @@ public class HistoryRepository {
     private final HistoryDao historyDao;
 
     public HistoryRepository(Context context) {
-        ModelDatabase db = ModelDatabase.getInstance(context);
+        ModelDatabase db = ModelDatabase.Companion.getInstance(context);
         this.historyDao = db.historyDao();
     }
 

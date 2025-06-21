@@ -1,4 +1,4 @@
-package com.inv.inventryapp.view
+package com.inv.inventryapp.view.home
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -32,7 +32,7 @@ class ProductEditFragmentView : Fragment() {
             binding.editTextLocation.setText(product.location)
             binding.editTextExpirationDate.setText(product.expirationDate?.toString() ?: "")
             binding.editTextPurchaseDate.setText(product.purchaseDate?.toString() ?: "")
-            binding.editTextBarcode.setText(product.barcodeNumber?.toString() ?: "")
+            binding.editTextBarcode.setText(product.barcode?.toString() ?: "")
         })
 
         // 保存ボタン押下時のみViewModelへ反映
@@ -46,17 +46,14 @@ class ProductEditFragmentView : Fragment() {
             val barcode = binding.editTextBarcode.text.toString().toIntOrNull()
             // 必要に応じて他の項目も取得
 
-            val current = viewModel.product.value ?: com.inv.inventryapp.model.entity.Product()
-            val updated = current.copy(
-                productName = productName,
-                price = price,
-                quantity = quantity,
-                location = location,
-                // expirationDate, purchaseDateは適切な型に変換してセット
-                barcodeNumber = barcode
+            viewModel.updateProduct(
+                productName,
+                price ?: 0,
+                quantity ?: 0,
+                location,
+                barcode ?: 0
             )
-            viewModel.product.value = updated
-            // 必要に応じて保存処理呼び出し
+            viewModel.onInputComplete()
         }
     }
 

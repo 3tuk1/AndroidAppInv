@@ -1,42 +1,52 @@
-package com.inv.inventryapp.model;
+package com.inv.inventryapp.model
 
-import android.content.Context;
-import androidx.room.Database;
-import androidx.room.Room;
-import androidx.room.RoomDatabase;
-import com.inv.inventryapp.model.entity.*;
-import com.inv.inventryapp.model.dao.*;
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.inv.inventryapp.model.dao.*
+import com.inv.inventryapp.model.entity.*
+import com.inv.inventryapp.model.room.Converters
 
-@Database(entities = {
-        Product.class,
-        Barcode.class,
-        ProductCategory.class,
-        History.class,
-        Analysis.class,
-        ShoppingList.class
-    }, version = 1, exportSchema = false)
-public abstract class ModelDatabase extends RoomDatabase {
-    private static volatile ModelDatabase INSTANCE;
+@Database(
+    entities = [
+        Product::class,
+        Barcode::class,
+        ProductCategory::class,
+        History::class,
+        Analysis::class,
+        ShoppingList::class
+    ],
+    version = 1,
+    exportSchema = false
+)
+@TypeConverters(Converters::class)
+abstract class ModelDatabase : RoomDatabase() {
 
-    public abstract ProductDao productDao();
-    public abstract BarcodeDao barcodeDao();
-    public abstract ProductCategoryDao productCategoryDao();
-    public abstract HistoryDao historyDao();
-    public abstract AnalysisDao analysisDao();
-    public abstract ShoppingListDao shoppingListDao();
+    abstract fun productDao(): ProductDao
+    abstract fun barcodeDao(): BarcodeDao
+    abstract fun productCategoryDao(): ProductCategoryDao
+    abstract fun historyDao(): HistoryDao
+    abstract fun analysisDao(): AnalysisDao
+    abstract fun shoppingListDao(): ShoppingListDao
 
-    public static ModelDatabase getInstance(Context context) {
-        if (INSTANCE == null) {
-            synchronized (ModelDatabase.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                            ModelDatabase.class, "model_database")
-                            .fallbackToDestructiveMigration()
-                            .build();
-                }
+    companion object {
+        @Volatile
+        private var INSTANCE: ModelDatabase? = null
+
+        fun getInstance(context: Context): ModelDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    ModelDatabase::class.java, "model_database"
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                INSTANCE = instance
+                instance
             }
         }
-        return INSTANCE;
     }
 }
 
