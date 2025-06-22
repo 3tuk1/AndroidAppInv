@@ -18,6 +18,9 @@ class AnalysisActivity : AppCompatActivity() {
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
         bottomNavigationView.selectedItemId = R.id.navigation_analysis
 
+        val menuOrder = listOf(R.id.navigation_home, R.id.navigation_savings, R.id.navigation_analysis, R.id.navigation_settings)
+        val currentIndex = menuOrder.indexOf(R.id.navigation_analysis)
+
         bottomNavigationView.setOnItemSelectedListener { item ->
             if (item.itemId == bottomNavigationView.selectedItemId) {
                 return@setOnItemSelectedListener false
@@ -31,8 +34,14 @@ class AnalysisActivity : AppCompatActivity() {
             }
 
             intent?.let {
-                it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                val nextIndex = menuOrder.indexOf(item.itemId)
                 startActivity(it)
+                if (nextIndex > currentIndex) {
+                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+                } else {
+                    overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+                }
+                finish()
             }
             true
         }
