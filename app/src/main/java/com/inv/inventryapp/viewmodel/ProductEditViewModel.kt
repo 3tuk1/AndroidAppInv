@@ -20,6 +20,17 @@ class ProductEditViewModel(
     // クラス図の xmlLiveData に相当。Fragmentのコードから 'product' と推測
     val product = MutableLiveData<Product>()
 
+    fun loadProduct(productId: Int) {
+        viewModelScope.launch {
+            val loadedProduct = withContext(Dispatchers.IO) {
+                productRepository.findById(productId)
+            }
+            loadedProduct?.let {
+                product.value = it
+            }
+        }
+    }
+
     fun updateProduct(
         productName: String,
         price: Int?,

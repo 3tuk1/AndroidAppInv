@@ -12,11 +12,23 @@ import com.inv.inventryapp.model.entity.Product
 class ProductListAdapter(private var productList: List<Product>) :
     RecyclerView.Adapter<ProductListAdapter.ProductViewHolder>() {
 
-    class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    var onItemLongClickListener: ((Product, View) -> Unit)? = null
+
+    inner class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.item_image)
         val nameTextView: TextView = itemView.findViewById(R.id.item_name)
         val expirationDateTextView: TextView = itemView.findViewById(R.id.item_expiration_date)
         val quantityTextView: TextView = itemView.findViewById(R.id.item_quantity)
+
+        init {
+            itemView.setOnLongClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onItemLongClickListener?.invoke(productList[position], it)
+                }
+                true
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {

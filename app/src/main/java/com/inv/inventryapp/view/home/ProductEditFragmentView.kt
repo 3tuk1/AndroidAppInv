@@ -37,6 +37,12 @@ class ProductEditFragmentView : Fragment() {
             binding.editTextBarcode.setText(it)
         }
 
+        arguments?.getInt("PRODUCT_ID")?.let { productId ->
+            if (productId != 0) {
+                viewModel.loadProduct(productId)
+            }
+        }
+
         // LiveData監視例
         viewModel.product.observe(viewLifecycleOwner, Observer { product ->
             binding.editTextProductName.setText(product.productName)

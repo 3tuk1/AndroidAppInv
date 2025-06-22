@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,9 +38,53 @@ class ProductListFragment : Fragment() {
 
     private fun setupRecyclerView() {
         productListAdapter = ProductListAdapter(emptyList())
+        productListAdapter.onItemLongClickListener = { product, view ->
+            showContextMenu(product, view)
+        }
         binding.productRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = productListAdapter
+        }
+    }
+
+    private fun showContextMenu(product: Product, view: View) {
+        val popup = PopupMenu(requireContext(), view)
+        popup.menuInflater.inflate(R.menu.product_item_context_menu, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.menu_edit -> {
+                    editProduct(product)
+                    true
+                }
+                R.id.menu_delete -> {
+                    deleteProduct(product)
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
+    }
+
+    private fun editProduct(product: Product) {
+        val fragment = ProductEditFragmentView().apply {
+            arguments = Bundle().apply {
+                putInt("PRODUCT_ID", product.productId)
+            }
+        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun deleteProduct(product: Product) {
+        lifecycleScope.launch {
+            val productDao = ModelDatabase.getInstance(requireContext()).productDao()
+            withContext(Dispatchers.IO) {
+                productDao.delete(product)
+            }
+            loadProducts()
         }
     }
 
