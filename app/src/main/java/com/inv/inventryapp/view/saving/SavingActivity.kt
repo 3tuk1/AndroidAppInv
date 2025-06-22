@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.inv.inventryapp.view.analysis.AnalysisActivity
 import com.inv.inventryapp.R
+import com.inv.inventryapp.view.home.HomeActivity
 import com.inv.inventryapp.view.setting.SettingActivity
 
 class SavingActivity : AppCompatActivity() {
@@ -23,7 +24,7 @@ class SavingActivity : AppCompatActivity() {
             }
 
             val intent = when (item.itemId) {
-                R.id.navigation_home -> Intent(this, MainActivity::class.java)
+                R.id.navigation_home -> Intent(this, HomeActivity::class.java)
                 R.id.navigation_analysis -> Intent(this, AnalysisActivity::class.java)
                 R.id.navigation_settings -> Intent(this, SettingActivity::class.java)
                 else -> null

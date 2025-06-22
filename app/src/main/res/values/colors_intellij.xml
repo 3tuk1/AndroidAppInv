@@ -1,9 +1,0 @@
-<resources>
-    <!-- IntelliJ風ダークテーマの基礎色定義 -->
-    <color name="intellij_background">#2B2B2B</color>
-    <color name="intellij_surface">#3C3F41</color>
-    <color name="intellij_text_primary">#A9B7C6</color>
-    <color name="intellij_text_hint">#808080</color>
-    <color name="intellij_button_text">#FFFFFF</color>
-</resources>
-

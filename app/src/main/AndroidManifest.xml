@@ -8,7 +8,7 @@
         android:label="@mipmap/ic_stock_manager_icon"
         android:roundIcon="@mipmap/ic_stock_manager_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light">
+        android:theme="@style/Theme.InventryApp">
         <activity
             android:name=".view.home.HomeActivity"
             android:exported="true">
