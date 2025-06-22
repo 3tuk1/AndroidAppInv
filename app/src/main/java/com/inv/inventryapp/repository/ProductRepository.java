@@ -42,4 +42,8 @@ public class ProductRepository {
     public Product findByName(String name) {
         return productDao.findByName(name);
     }
+
+    public Product findByBarcode(long barcodeNumber) {
+        return productDao.findByBarcode(barcodeNumber);
+    }
 }

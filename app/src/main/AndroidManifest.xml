@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.CAMERA"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_stock_manager_icon"
@@ -20,6 +22,10 @@
         <activity android:name=".view.saving.SavingActivity" />
         <activity android:name=".view.setting.SettingActivity" />
         <activity android:name=".view.analysis.AnalysisActivity" />
+
+        <activity
+            android:name="com.canhub.cropper.CropImageActivity"
+            android:theme="@style/Base.Theme.AppCompat" />
     </application>
 
 </manifest>

@@ -68,6 +68,7 @@ dependencies {
     // --- Navigation ---
     implementation "androidx.navigation:navigation-fragment-ktx:2.7.7"
     implementation "androidx.navigation:navigation-ui-ktx:2.7.7"
+    implementation 'com.google.zxing:core:3.4.1'
 
     // --- CameraX ---
     def camerax_version = "1.2.3"
@@ -84,6 +85,7 @@ dependencies {
     // --- その他 ---
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
     implementation("com.kizitonwose.calendar:view:2.5.1")
+    implementation 'com.vanniktech:android-image-cropper:4.5.0'
 
     // この行を追加
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'

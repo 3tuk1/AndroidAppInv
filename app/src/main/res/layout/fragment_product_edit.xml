@@ -79,25 +79,9 @@
         app:layout_constraintTop_toBottomOf="@id/editTextLocation"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"/>
-
-    <!-- 購入日 -->
-    <EditText
-        android:id="@+id/editTextPurchaseDate"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:hint="購入日"
-        android:background="@color/intellij_surface"
-        android:textColor="@color/intellij_text_primary"
-        android:textColorHint="@color/intellij_text_hint"
-        app:layout_constraintTop_toBottomOf="@id/editTextExpirationDate"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"/>
-
-    <!-- 画像 -->
-
-    <!-- バーコード -->
+        android:layout_marginTop="8dp"
+        android:focusable="false"
+        android:clickable="true" />
 
     <ImageView
         android:id="@+id/imageViewProduct"
@@ -108,7 +92,7 @@
         android:background="@color/intellij_surface"
         android:contentDescription="商品画像"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/editTextPurchaseDate" />
+        app:layout_constraintTop_toBottomOf="@id/editTextExpirationDate" />
 
     <EditText
         android:id="@+id/editTextBarcode"
@@ -122,7 +106,9 @@
         app:layout_constraintTop_toBottomOf="@+id/imageViewProduct"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginTop="8dp"
+        android:focusable="false"
+        android:clickable="true" />
 
     <LinearLayout
         android:layout_width="0dp"

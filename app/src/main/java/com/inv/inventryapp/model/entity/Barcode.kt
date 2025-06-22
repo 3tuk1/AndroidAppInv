@@ -9,5 +9,5 @@ data class Barcode(
     @PrimaryKey(autoGenerate = true)
     var barcodeId: Int = 0,
     @ColumnInfo(name = "barcode_number")
-    var barcodeNumber: Int = 0
+    var barcodeNumber: Long = 0L // ★ Int から Long に変更
 )

@@ -1,5 +1,6 @@
 package com.inv.inventryapp.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,7 +9,6 @@ import com.inv.inventryapp.repository.ProductRepository
 import com.inv.inventryapp.usecase.HistoryUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 // クラス図に基づき、RepositoryとUseCaseを注入する
@@ -21,62 +21,62 @@ class ProductEditViewModel(
     val product = MutableLiveData<Product>()
 
     fun loadProduct(productId: Int) {
-        viewModelScope.launch {
-            val loadedProduct = withContext(Dispatchers.IO) {
-                productRepository.findById(productId)
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            val loadedProduct = productRepository.findById(productId)
             loadedProduct?.let {
-                product.value = it
+                product.postValue(it)
             }
         }
     }
 
-    fun updateProduct(
-        productName: String,
-        price: Int?,
-        quantity: Int?,
-        location: String,
-        barcode: Int?
-    ) {
-        val currentProduct = product.value ?: Product()
-        val updatedProduct = currentProduct.copy(
-            productName = productName,
-            price = price,
-            quantity = quantity,
-            location = location,
-            barcode = currentProduct.barcode.copy(barcodeNumber = barcode ?: currentProduct.barcode.barcodeNumber)
-        )
-        product.value = updatedProduct
-    }
-
     /**
      * 保存ボタンが押されたときに呼び出される。
-     * 現在のproduct LiveDataの値をリポジトリに保存する。
      */
     fun onInputComplete() {
-        product.value?.let { productToSave ->
-            viewModelScope.launch {
-                withContext(Dispatchers.IO) {
-                    if (productToSave.productId == 0) { // 新規商品の場合
-                        productRepository.addProduct(productToSave)
-                        if ((productToSave.quantity ?: 0) > 0) {
-                            onQuantityChanged(productToSave.productName, productToSave.quantity ?: 0, "購入")
-                        }
-                    } else { // 既存商品の場合
-                        val originalProduct = productRepository.findById(productToSave.productId)
-                        originalProduct?.let {
-                            val oldQuantity = it.quantity ?: 0
-                            val newQuantity = productToSave.quantity ?: 0
-                            val quantityChange = newQuantity - oldQuantity
+        // ���★★ デバッグ用ログ：保存処理が呼ばれた時点での商品データを確認します ★★★
+        Log.d("ProductEditViewModel", "onInputComplete triggered. Product value: ${product.value}")
 
-                            if (quantityChange > 0) {
-                                onQuantityChanged(productToSave.productName, quantityChange, "購入")
-                            } else if (quantityChange < 0) {
-                                onQuantityChanged(productToSave.productName, -quantityChange, "消費")
-                            }
+        product.value?.let { productToSave ->
+            val finalProduct = productToSave.copy(purchaseDate = LocalDate.now())
+
+            viewModelScope.launch(Dispatchers.IO) {
+                // `productId`が0の場合は「新規商品」と判断します
+                if (finalProduct.productId == 0) {
+
+                    // ---【新規商品の処理ブロック】---
+                    Log.d("ProductEditViewModel", "Executing NEW product logic.")
+
+                    productRepository.addProduct(finalProduct)
+
+                    // 新規作成なので、入力された数量そのものを「購入」として履歴に記録します。
+                    onQuantityChanged(
+                        finalProduct.productName,
+                        finalProduct.quantity ?: 0,
+                        "購入"
+                    )
+
+                } else {
+
+                    // ---【既存商品の更新処理ブロック】---
+                    Log.d("ProductEditViewModel", "Executing EXISTING product logic for productId: ${finalProduct.productId}")
+
+                    val originalProduct = productRepository.findById(finalProduct.productId)
+                    originalProduct?.let {
+                        val oldQuantity = it.quantity ?: 0
+                        val newQuantity = finalProduct.quantity ?: 0
+                        // 既存商品なので、数量の「差分」を計算します。
+                        val quantityChange = newQuantity - oldQuantity
+
+                        if (quantityChange > 0) {
+                            // 数量が増えた場合、その増加分を「購入」として記録します。
+                            onQuantityChanged(finalProduct.productName, quantityChange, "購入")
+                        } else if (quantityChange < 0) {
+                            // 数量が減った場合、その減少分を「消費」として記録します。
+                            onQuantityChanged(finalProduct.productName, -quantityChange, "消費")
                         }
-                        productRepository.updateProduct(productToSave)
+                        // 数量に変化がない場合は、履歴に記録しません。
                     }
+                    productRepository.updateProduct(finalProduct)
                 }
             }
         }
@@ -86,31 +86,24 @@ class ProductEditViewModel(
      * 削除ボタンが押されたときに呼び出される。
      */
     fun onDelete(productId: Int) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val productToUpdate = productRepository.findById(productId)
-                productToUpdate?.let {
-                    if ((it.quantity ?: 0) > 0) {
-                        onQuantityChanged(it.productName, it.quantity ?: 0, "消費")
-                    }
-                    val updatedProduct = it.copy(quantity = 0)
-                    productRepository.updateProduct(updatedProduct)
+        viewModelScope.launch(Dispatchers.IO) {
+            val productToUpdate = productRepository.findById(productId)
+            productToUpdate?.let {
+                if ((it.quantity ?: 0) > 0) {
+                    onQuantityChanged(it.productName, it.quantity ?: 0, "消費")
                 }
+                val updatedProduct = it.copy(quantity = 0)
+                productRepository.updateProduct(updatedProduct)
             }
         }
     }
 
     /**
      * 数量が変更された際の履歴を記録する。
-     * クラス図ではprivate
      */
-    private fun onQuantityChanged(productName: String, quantity: Int, type: String) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                historyUseCase.addHistory(productName, type, LocalDate.now(), quantity)
-                //　ログに出力
-                println("履歴追加: $productName, $type, ${LocalDate.now()}, $quantity")
-            }
-        }
+    private suspend fun onQuantityChanged(productName: String, quantity: Int, type: String) {
+        historyUseCase.addHistory(productName, type, LocalDate.now(), quantity)
+        // ★★★ デバッグ用ログ：履歴が追加されたことを確認します ★★★
+        Log.d("ProductEditViewModel", "History added: Name=$productName, Type=$type, Qty=$quantity")
     }
 }

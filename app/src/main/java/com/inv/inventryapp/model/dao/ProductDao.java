@@ -31,4 +31,12 @@ public interface ProductDao {
 
     @Query("SELECT * FROM product WHERE product_name = :name")
     Product findByName(String name);
+
+    /**
+     * バーコード番号を元に商品を検索します。
+     * @param barcodeNumber 検索するバーコード番号
+     * @return 見つかった商品。見つからない場合はnull
+     */
+    @Query("SELECT * FROM product WHERE barcode_barcode_number = :barcodeNumber LIMIT 1")
+    Product findByBarcode(long barcodeNumber);
 }
