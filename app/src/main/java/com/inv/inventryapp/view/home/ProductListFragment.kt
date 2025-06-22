@@ -6,21 +6,19 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.inv.inventryapp.R
 import com.inv.inventryapp.databinding.FragmentProductListBinding
-import com.inv.inventryapp.model.ModelDatabase
 import com.inv.inventryapp.model.entity.Product
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.inv.inventryapp.viewmodel.ProductViewModel
 
 class ProductListFragment : Fragment() {
 
     private var _binding: FragmentProductListBinding? = null
     private val binding get() = _binding!!
     private lateinit var productListAdapter: ProductListAdapter
+    private val viewModel: ProductViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,11 +31,14 @@ class ProductListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
-        loadProducts()
+
+        viewModel.allProducts.observe(viewLifecycleOwner) { products ->
+            productListAdapter.submitList(products)
+        }
     }
 
     private fun setupRecyclerView() {
-        productListAdapter = ProductListAdapter(emptyList())
+        productListAdapter = ProductListAdapter()
         productListAdapter.onItemLongClickListener = { product, view ->
             showContextMenu(product, view)
         }
@@ -57,7 +58,7 @@ class ProductListFragment : Fragment() {
                     true
                 }
                 R.id.menu_delete -> {
-                    deleteProduct(product)
+                    viewModel.setQuantityToZero(product)
                     true
                 }
                 else -> false
@@ -76,28 +77,6 @@ class ProductListFragment : Fragment() {
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)
             .commit()
-    }
-
-    private fun deleteProduct(product: Product) {
-        lifecycleScope.launch {
-            val productDao = ModelDatabase.getInstance(requireContext()).productDao()
-            withContext(Dispatchers.IO) {
-                productDao.delete(product)
-            }
-            loadProducts()
-        }
-    }
-
-    private fun loadProducts() {
-        // ViewModel経由でデータを取得するのがベストプラクティスですが、
-        // ここでは簡潔にするため直接データベースから読み込みます。
-        lifecycleScope.launch {
-            val productDao = ModelDatabase.getInstance(requireContext()).productDao()
-            val productList = withContext(Dispatchers.IO) {
-                productDao.getAll()
-            }
-            productListAdapter.updateData(productList)
-        }
     }
 
     override fun onDestroyView() {

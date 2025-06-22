@@ -3,55 +3,44 @@ package com.inv.inventryapp.view.home
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.inv.inventryapp.R
+import com.inv.inventryapp.databinding.ProductListItemBinding
 import com.inv.inventryapp.model.entity.Product
 
-class ProductListAdapter(private var productList: List<Product>) :
-    RecyclerView.Adapter<ProductListAdapter.ProductViewHolder>() {
+class ProductListAdapter : ListAdapter<Product, ProductListAdapter.ProductViewHolder>(ProductDiffCallback()) {
 
     var onItemLongClickListener: ((Product, View) -> Unit)? = null
 
-    inner class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val imageView: ImageView = itemView.findViewById(R.id.item_image)
-        val nameTextView: TextView = itemView.findViewById(R.id.item_name)
-        val expirationDateTextView: TextView = itemView.findViewById(R.id.item_expiration_date)
-        val quantityTextView: TextView = itemView.findViewById(R.id.item_quantity)
-
-        init {
-            itemView.setOnLongClickListener {
-                val position = adapterPosition
-                if (position != RecyclerView.NO_POSITION) {
-                    onItemLongClickListener?.invoke(productList[position], it)
-                }
-                true
-            }
-        }
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.product_list_item, parent, false)
-        return ProductViewHolder(view)
+        val binding = ProductListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ProductViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
-        val product = productList[position]
-
-        holder.nameTextView.text = "商品名: ${product.productName}"
-        holder.expirationDateTextView.text = "賞味期限: ${product.expirationDate?.toString() ?: "N/A"}"
-        holder.quantityTextView.text = "個数: ${product.quantity?.toString() ?: "N/A"}"
-
-        // 画像表示はGlideやPicassoなどのライブラリを使うのが一般的ですが、ここでは省略します。
-        // 例: Glide.with(holder.itemView.context).load(product.imagePath).into(holder.imageView)
+        val product = getItem(position)
+        holder.bind(product)
+        holder.itemView.setOnLongClickListener {
+            onItemLongClickListener?.invoke(product, it)
+            true
+        }
     }
 
-    override fun getItemCount() = productList.size
+    class ProductViewHolder(private val binding: ProductListItemBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(product: Product) {
+            binding.itemName.text = product.productName
+            binding.itemQuantity.text = "個数: ${product.quantity}"
+        }
+    }
 
-    fun updateData(newProductList: List<Product>) {
-        this.productList = newProductList
-        notifyDataSetChanged()
+    class ProductDiffCallback : DiffUtil.ItemCallback<Product>() {
+        override fun areItemsTheSame(oldItem: Product, newItem: Product): Boolean {
+            return oldItem.productId == newItem.productId
+        }
+
+        override fun areContentsTheSame(oldItem: Product, newItem: Product): Boolean {
+            return oldItem == newItem
+        }
     }
 }

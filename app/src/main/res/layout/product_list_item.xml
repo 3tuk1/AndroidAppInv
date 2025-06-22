@@ -1,63 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="@color/intellij_surface"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="@color/intellij_surface"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp">
 
-        <ImageView
-            android:id="@+id/item_image"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:scaleType="centerCrop"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:src="@tools:sample/avatars" />
-
-        <TextView
-            android:id="@+id/item_name"
-            android:layout_width="0dp"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:textColor="@color/intellij_text_primary"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/item_image"
-            app:layout_constraintTop_toTopOf="@id/item_image"
-            tools:text="商品名: 牛乳" />
+            android:padding="16dp">
 
-        <TextView
-            android:id="@+id/item_expiration_date"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/intellij_text_primary"
-            app:layout_constraintStart_toStartOf="@id/item_name"
-            app:layout_constraintTop_toBottomOf="@id/item_name"
-            tools:text="賞味期限: 2025/12/31" />
+            <ImageView
+                android:id="@+id/item_image"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:src="@tools:sample/avatars" />
 
-        <TextView
-            android:id="@+id/item_quantity"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textColor="@color/intellij_text_primary"
-            app:layout_constraintStart_toStartOf="@id/item_name"
-            app:layout_constraintTop_toBottomOf="@id/item_expiration_date"
-            tools:text="個数: 2" />
+            <TextView
+                android:id="@+id/item_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:textColor="@color/intellij_text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/item_image"
+                app:layout_constraintTop_toTopOf="@id/item_image"
+                tools:text="商品名: 牛乳" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/item_expiration_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/intellij_text_primary"
+                app:layout_constraintStart_toStartOf="@id/item_name"
+                app:layout_constraintTop_toBottomOf="@id/item_name"
+                tools:text="賞味期限: 2025/12/31" />
 
-</com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/item_quantity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textColor="@color/intellij_text_primary"
+                app:layout_constraintStart_toStartOf="@id/item_name"
+                app:layout_constraintTop_toBottomOf="@id/item_expiration_date"
+                tools:text="個数: 2" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+</layout>

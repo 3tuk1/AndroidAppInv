@@ -5,6 +5,7 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Delete;
 import androidx.room.Update;
+import androidx.lifecycle.LiveData;
 import java.util.List;
 import com.inv.inventryapp.model.entity.History;
 
@@ -23,5 +24,5 @@ public interface HistoryDao {
     List<History> getAll();
 
     @Query("SELECT * FROM history WHERE strftime('%Y-%m', date) = :yearMonth")
-    List<History> getHistoriesForMonth(String yearMonth);
+    LiveData<List<History>> getHistoriesForMonth(String yearMonth);
 }

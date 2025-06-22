@@ -4,6 +4,8 @@ import android.content.Context;
 import com.inv.inventryapp.model.ModelDatabase;
 import com.inv.inventryapp.model.dao.ProductDao;
 import com.inv.inventryapp.model.entity.Product;
+import androidx.lifecycle.LiveData;
+import java.util.List;
 
 public class ProductRepository {
     private final ProductDao productDao;
@@ -23,6 +25,14 @@ public class ProductRepository {
 
     public void deleteProduct(Product product) {
         productDao.delete(product);
+    }
+
+    public LiveData<List<Product>> getAllProducts() {
+        return productDao.getAll();
+    }
+
+    public LiveData<List<Product>> getAllProductsWithZeroQuantity() {
+        return productDao.getAllWithZeroQuantity();
     }
 
     public Product findById(int productId) {

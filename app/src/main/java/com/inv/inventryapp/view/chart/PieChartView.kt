@@ -2,7 +2,9 @@ package com.inv.inventryapp.view.chart
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
@@ -32,6 +34,11 @@ class PieChartView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
         textSize = 48f
     }
+    private val valueTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.CENTER
+        textSize = 40f
+    }
 
     fun setData(data: List<Float>) {
         this.data = data
@@ -54,12 +61,26 @@ class PieChartView @JvmOverloads constructor(
 
         rectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
 
-        var startAngle = 0f
+        var startAngle = -90f
         if (total > 0f) {
             data.forEachIndexed { index, value ->
+                if (value == 0f) {
+                    return@forEachIndexed
+                }
                 val sweepAngle = value / total * 360f
                 paint.color = colors[index % colors.size]
                 canvas.drawArc(rectF, startAngle, sweepAngle, true, paint)
+
+                // Draw value text
+                val textAngle = Math.toRadians((startAngle + sweepAngle / 2).toDouble())
+                val textRadius = radius * (holeRadiusRatio + (1 - holeRadiusRatio) / 2)
+                val textX = centerX + (textRadius * Math.cos(textAngle)).toFloat()
+                val textY = centerY + (textRadius * Math.sin(textAngle)).toFloat()
+                val text = value.toInt().toString()
+                val bounds = Rect()
+                valueTextPaint.getTextBounds(text, 0, text.length, bounds)
+                canvas.drawText(text, textX, textY + bounds.height() / 2, valueTextPaint)
+
                 startAngle += sweepAngle
             }
         }

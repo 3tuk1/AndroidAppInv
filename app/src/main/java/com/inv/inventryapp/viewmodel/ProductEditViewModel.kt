@@ -108,6 +108,8 @@ class ProductEditViewModel(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 historyUseCase.addHistory(productName, type, LocalDate.now(), quantity)
+                //　ログに出力
+                println("履歴追加: $productName, $type, ${LocalDate.now()}, $quantity")
             }
         }
     }

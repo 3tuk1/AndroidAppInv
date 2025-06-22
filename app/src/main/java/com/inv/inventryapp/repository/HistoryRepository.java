@@ -5,6 +5,7 @@ import com.inv.inventryapp.model.ModelDatabase;
 import com.inv.inventryapp.model.dao.HistoryDao;
 import com.inv.inventryapp.model.entity.History;
 import java.time.LocalDate;
+import androidx.lifecycle.LiveData;
 
 public class HistoryRepository {
     private final HistoryDao historyDao;
@@ -19,6 +20,10 @@ public class HistoryRepository {
         historyDao.insert(history);
     }
 
+    public void addHistory(History history) {
+        historyDao.insert(history);
+    }
+
     public void updateHistory(History history) {
         historyDao.update(history);
     }
@@ -27,7 +32,7 @@ public class HistoryRepository {
         historyDao.delete(history);
     }
 
-    public java.util.List<History> getHistoriesForMonth(String yearMonth) {
+    public LiveData<java.util.List<History>> getHistoriesForMonth(String yearMonth) {
         return historyDao.getHistoriesForMonth(yearMonth);
     }
 }
