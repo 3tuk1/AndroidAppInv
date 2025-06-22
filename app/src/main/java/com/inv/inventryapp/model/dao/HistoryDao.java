@@ -21,5 +21,7 @@ public interface HistoryDao {
 
     @Query("SELECT * FROM history ORDER BY date DESC")
     List<History> getAll();
-}
 
+    @Query("SELECT * FROM history WHERE strftime('%Y-%m', date) = :yearMonth")
+    List<History> getHistoriesForMonth(String yearMonth);
+}

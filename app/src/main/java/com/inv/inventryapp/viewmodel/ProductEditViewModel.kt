@@ -59,7 +59,22 @@ class ProductEditViewModel(
                 withContext(Dispatchers.IO) {
                     if (productToSave.productId == 0) { // 新規商品の場合
                         productRepository.addProduct(productToSave)
+                        if ((productToSave.quantity ?: 0) > 0) {
+                            onQuantityChanged(productToSave.productName, productToSave.quantity ?: 0, "購入")
+                        }
                     } else { // 既存商品の場合
+                        val originalProduct = productRepository.findById(productToSave.productId)
+                        originalProduct?.let {
+                            val oldQuantity = it.quantity ?: 0
+                            val newQuantity = productToSave.quantity ?: 0
+                            val quantityChange = newQuantity - oldQuantity
+
+                            if (quantityChange > 0) {
+                                onQuantityChanged(productToSave.productName, quantityChange, "購入")
+                            } else if (quantityChange < 0) {
+                                onQuantityChanged(productToSave.productName, -quantityChange, "消費")
+                            }
+                        }
                         productRepository.updateProduct(productToSave)
                     }
                 }
@@ -73,9 +88,13 @@ class ProductEditViewModel(
     fun onDelete(productId: Int) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val productToDelete = productRepository.findById(productId)
-                productToDelete?.let {
-                    productRepository.deleteProduct(it)
+                val productToUpdate = productRepository.findById(productId)
+                productToUpdate?.let {
+                    if ((it.quantity ?: 0) > 0) {
+                        onQuantityChanged(it.productName, it.quantity ?: 0, "消費")
+                    }
+                    val updatedProduct = it.copy(quantity = 0)
+                    productRepository.updateProduct(updatedProduct)
                 }
             }
         }

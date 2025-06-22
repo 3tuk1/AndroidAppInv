@@ -26,7 +26,10 @@ public class ProductRepository {
     }
 
     public Product findById(int productId) {
-        return productDao.getById(productId);
+        return productDao.findById(productId);
+    }
+
+    public Product findByName(String name) {
+        return productDao.findByName(name);
     }
 }
-

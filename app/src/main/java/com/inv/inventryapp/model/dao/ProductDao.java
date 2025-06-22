@@ -19,11 +19,12 @@ public interface ProductDao {
     @Delete
     void delete(Product product);
 
-    @Query("SELECT * FROM product")
+    @Query("SELECT * FROM product WHERE quantity > 0")
     List<Product> getAll();
 
-    @Query("SELECT * FROM product WHERE productId = :productId LIMIT 1")
-    Product getById(int productId);
+    @Query("SELECT * FROM product WHERE productId = :id")
+    Product findById(int id);
+
+    @Query("SELECT * FROM product WHERE product_name = :name")
+    Product findByName(String name);
 }
-
-

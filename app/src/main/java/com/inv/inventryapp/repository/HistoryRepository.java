@@ -26,4 +26,8 @@ public class HistoryRepository {
     public void deleteHistory(History history) {
         historyDao.delete(history);
     }
+
+    public java.util.List<History> getHistoriesForMonth(String yearMonth) {
+        return historyDao.getHistoriesForMonth(yearMonth);
+    }
 }
