@@ -31,6 +31,7 @@ android {
         }
     }
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -82,7 +83,10 @@ dependencies {
 
     // --- その他 ---
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
-    implementation 'com.github.kizitonwose:CalendarView:2.3.0'
+    implementation("com.kizitonwose.calendar:view:2.5.1")
+
+    // この行を追加
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 
     // --- テスト ---
     testImplementation 'junit:junit:4.13.2'

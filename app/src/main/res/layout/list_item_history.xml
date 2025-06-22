@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardBackgroundColor="@color/intellij_surface"
+    app:cardCornerRadius="8dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/history_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/intellij_text_primary"
+            android:textSize="16sp"
+            android:layout_marginEnd="16dp"
+            tools:text="6/20" />
+
+        <TextView
+            android:id="@+id/history_product_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/intellij_text_primary"
+            android:textSize="16sp"
+            tools:text="サンマ" />
+
+        <TextView
+            android:id="@+id/history_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/intellij_text_primary"
+            android:textSize="16sp"
+            android:layout_marginStart="16dp"
+            tools:text="消費" />
+
+        <TextView
+            android:id="@+id/history_quantity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/intellij_text_primary"
+            android:textSize="16sp"
+            android:layout_marginStart="8dp"
+            tools:text="3匹" />
+
+        <TextView
+            android:id="@+id/history_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/intellij_text_primary"
+            android:textSize="16sp"
+            android:layout_marginStart="16dp"
+            tools:text="400円" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

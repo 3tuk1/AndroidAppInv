@@ -3,26 +3,48 @@ package com.inv.inventryapp.view.analysis
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.tabs.TabLayoutMediator
 import com.inv.inventryapp.R
+import com.inv.inventryapp.databinding.ActivityAnalysisBinding
 import com.inv.inventryapp.view.home.HomeActivity
 import com.inv.inventryapp.view.saving.SavingActivity
 import com.inv.inventryapp.view.setting.SettingActivity
 
 class AnalysisActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityAnalysisBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_analysis)
+        binding = ActivityAnalysisBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
-        bottomNavigationView.selectedItemId = R.id.navigation_analysis
+        setupTabs()
+        setupBottomNavigation()
+    }
+
+    private fun setupTabs() {
+        val adapter = AnalysisFragmentAdapter(this)
+        binding.viewPager.adapter = adapter
+
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            tab.text = when (position) {
+                0 -> "購入リスト"
+                1 -> "カレンダー"
+                2 -> "履歴"
+                else -> null
+            }
+        }.attach()
+    }
+
+    private fun setupBottomNavigation() {
+        binding.bottomNavigationView.selectedItemId = R.id.navigation_analysis
 
         val menuOrder = listOf(R.id.navigation_home, R.id.navigation_savings, R.id.navigation_analysis, R.id.navigation_settings)
         val currentIndex = menuOrder.indexOf(R.id.navigation_analysis)
 
-        bottomNavigationView.setOnItemSelectedListener { item ->
-            if (item.itemId == bottomNavigationView.selectedItemId) {
+        binding.bottomNavigationView.setOnItemSelectedListener { item ->
+            if (item.itemId == binding.bottomNavigationView.selectedItemId) {
                 return@setOnItemSelectedListener false
             }
 
@@ -47,3 +69,4 @@ class AnalysisActivity : AppCompatActivity() {
         }
     }
 }
+

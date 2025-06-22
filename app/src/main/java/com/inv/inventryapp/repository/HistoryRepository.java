@@ -5,6 +5,7 @@ import com.inv.inventryapp.model.ModelDatabase;
 import com.inv.inventryapp.model.dao.HistoryDao;
 import com.inv.inventryapp.model.entity.History;
 import java.time.LocalDate;
+import java.util.List; // Listをインポート
 import androidx.lifecycle.LiveData;
 
 public class HistoryRepository {
@@ -32,7 +33,12 @@ public class HistoryRepository {
         historyDao.delete(history);
     }
 
-    public LiveData<java.util.List<History>> getHistoriesForMonth(String yearMonth) {
+    // 全ての履歴を取得するメソッドを追加
+    public List<History> getAllHistories() {
+        return historyDao.getAll();
+    }
+
+    public LiveData<List<History>> getHistoriesForMonth(String yearMonth) {
         return historyDao.getHistoriesForMonth(yearMonth);
     }
 }
