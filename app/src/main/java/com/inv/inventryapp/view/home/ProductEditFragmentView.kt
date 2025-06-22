@@ -7,13 +7,21 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import com.inv.inventryapp.viewmodel.ProductEditViewModel
 import com.inv.inventryapp.databinding.FragmentProductEditBinding
+import com.inv.inventryapp.di.Injector
+import com.inv.inventryapp.model.ModelDatabase
+import com.inv.inventryapp.repository.HistoryRepository
+import com.inv.inventryapp.repository.ProductRepository
+import com.inv.inventryapp.usecase.HistoryUseCase
+import com.inv.inventryapp.viewmodel.ProductEditViewModel
+import com.inv.inventryapp.viewmodel.ProductEditViewModelFactory
 
 class ProductEditFragmentView : Fragment() {
     private var _binding: FragmentProductEditBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: ProductEditViewModel by viewModels()
+    private val viewModel: ProductEditViewModel by viewModels {
+        Injector.provideProductEditViewModelFactory(requireContext())
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -24,6 +32,11 @@ class ProductEditFragmentView : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        arguments?.getString("barcode")?.let {
+            binding.editTextBarcode.setText(it)
+        }
+
         // LiveData監視例
         viewModel.product.observe(viewLifecycleOwner, Observer { product ->
             binding.editTextProductName.setText(product.productName)
@@ -54,6 +67,17 @@ class ProductEditFragmentView : Fragment() {
                 barcode ?: 0
             )
             viewModel.onInputComplete()
+
+            parentFragmentManager.popBackStack()
+        }
+
+        binding.buttonDelete.setOnClickListener {
+            viewModel.product.value?.let {
+                if (it.productId != 0) {
+                    viewModel.onDelete(it.productId)
+                }
+            }
+            parentFragmentManager.popBackStack()
         }
     }
 
