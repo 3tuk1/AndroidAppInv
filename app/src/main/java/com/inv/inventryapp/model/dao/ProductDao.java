@@ -23,6 +23,9 @@ public interface ProductDao {
     @Query("SELECT * FROM product WHERE quantity > 0")
     LiveData<List<Product>> getAll();
 
+    @Query("SELECT * FROM product WHERE quantity > 0")
+    List<Product> getAllList();
+
     @Query("SELECT * FROM product ")
     LiveData<List<Product>> getAllWithZeroQuantity();
 
@@ -39,4 +42,7 @@ public interface ProductDao {
      */
     @Query("SELECT * FROM product WHERE barcode_barcode_number = :barcodeNumber LIMIT 1")
     Product findByBarcode(long barcodeNumber);
+
+    @Query("DELETE FROM product")
+    void deleteAll();
 }

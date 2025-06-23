@@ -41,4 +41,8 @@ public class HistoryRepository {
     public LiveData<List<History>> getHistoriesForMonth(String yearMonth) {
         return historyDao.getHistoriesForMonth(yearMonth);
     }
+
+    public void deleteAll() {
+        historyDao.deleteAll();
+    }
 }

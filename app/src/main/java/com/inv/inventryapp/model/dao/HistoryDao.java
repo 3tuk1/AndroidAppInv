@@ -25,4 +25,7 @@ public interface HistoryDao {
 
     @Query("SELECT * FROM history WHERE strftime('%Y-%m', date) = :yearMonth")
     LiveData<List<History>> getHistoriesForMonth(String yearMonth);
+
+    @Query("DELETE FROM history")
+    void deleteAll();
 }

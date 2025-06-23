@@ -5,6 +5,7 @@ import com.inv.inventryapp.model.ModelDatabase;
 import com.inv.inventryapp.model.dao.ShoppingListDao;
 import com.inv.inventryapp.model.entity.ShoppingList;
 import java.util.List;
+import androidx.lifecycle.LiveData;
 
 public class ShoppingListRepository {
     private final ShoppingListDao shoppingListDao;
@@ -15,29 +16,24 @@ public class ShoppingListRepository {
     }
 
     public void addShoppingList(String productName, int quantity) {
-        ShoppingList shoppingList = new ShoppingList(getprioritymax() + 1, productName, quantity);
-        shoppingListDao.insert(shoppingList);
-    }
-
-    public void removeFromShoppingList(int priority) {
-        List<ShoppingList> list = shoppingListDao.getAll();
-        for (ShoppingList s : list) {
-            if (s.getPriority() == priority) {
-                shoppingListDao.delete(s);
-            }
+        // 重複チェックを追加
+        ShoppingList existingItem = shoppingListDao.findByProductName(productName);
+        if (existingItem == null) {
+            ShoppingList shoppingList = new ShoppingList(getprioritymax() + 1, productName, quantity);
+            shoppingListDao.insert(shoppingList);
         }
     }
 
-    public List<ShoppingList> getShoppingList() {
+    public void delete(ShoppingList shoppingList) {
+        shoppingListDao.delete(shoppingList);
+    }
+
+    public LiveData<List<ShoppingList>> getShoppingList() {
         return shoppingListDao.getAll();
     }
 
-    public void setShoppingList(ShoppingList shoppingList) {
-        shoppingListDao.update(shoppingList);
-    }
-
     public int getprioritymax() {
-        List<ShoppingList> list = shoppingListDao.getAll();
+        List<ShoppingList> list = shoppingListDao.getAllList();
         int maxPriority = 0;
         for (ShoppingList s : list) {
             if (s.getPriority() > maxPriority) {
@@ -47,5 +43,8 @@ public class ShoppingListRepository {
         return maxPriority;
     }
 
-    // exportShoppingListは用途に応じて実装してください
+    // 追加: ViewModelから商品名で検索するためのメソッド
+    public ShoppingList findByProductName(String productName) {
+        return shoppingListDao.findByProductName(productName);
+    }
 }

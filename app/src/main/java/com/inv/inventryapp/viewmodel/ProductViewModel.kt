@@ -9,6 +9,7 @@ import com.inv.inventryapp.model.entity.History
 import com.inv.inventryapp.model.entity.Product
 import com.inv.inventryapp.repository.HistoryRepository
 import com.inv.inventryapp.repository.ProductRepository
+import com.inv.inventryapp.repository.ShoppingListRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -18,12 +19,14 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
 
     private val repository: ProductRepository
     private val historyRepository: HistoryRepository
+    private val shoppingListRepository: ShoppingListRepository
     val allProducts: LiveData<List<Product>>
 
     init {
         val productDao = ModelDatabase.getInstance(application).productDao()
         repository = ProductRepository(application)
         historyRepository = HistoryRepository(application)
+        shoppingListRepository = ShoppingListRepository(application)
         allProducts = repository.getAllProducts()
     }
 
@@ -44,5 +47,7 @@ class ProductViewModel(application: Application) : AndroidViewModel(application)
         }
         val updatedProduct = product.copy(quantity = 0)
         repository.updateProduct(updatedProduct)
+
+        shoppingListRepository.addShoppingList(product.productName, 1)
     }
 }

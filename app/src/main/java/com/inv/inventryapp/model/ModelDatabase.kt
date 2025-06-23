@@ -18,7 +18,7 @@ import com.inv.inventryapp.model.room.Converters
         Analysis::class,
         ShoppingList::class
     ],
-    version = 1,
+    version = 2, // バージョンを 1 から 2 に変更
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -49,4 +49,3 @@ abstract class ModelDatabase : RoomDatabase() {
         }
     }
 }
-

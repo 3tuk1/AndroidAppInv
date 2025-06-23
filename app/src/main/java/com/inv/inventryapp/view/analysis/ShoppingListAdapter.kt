@@ -10,13 +10,22 @@ import com.inv.inventryapp.model.entity.ShoppingList
 
 class ShoppingListAdapter : ListAdapter<ShoppingList, ShoppingListAdapter.ShoppingListViewHolder>(DiffCallback) {
 
+    // 長押しリスナーのコールバックを定義
+    var onItemLongClickListener: ((ShoppingList) -> Unit)? = null
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShoppingListViewHolder {
         val binding = ListItemShoppingBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ShoppingListViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ShoppingListViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val item = getItem(position)
+        holder.bind(item)
+        // itemViewに長押しリスナーを設定
+        holder.itemView.setOnLongClickListener {
+            onItemLongClickListener?.invoke(item)
+            true
+        }
     }
 
     class ShoppingListViewHolder(private val binding: ListItemShoppingBinding) : RecyclerView.ViewHolder(binding.root) {

@@ -31,6 +31,11 @@ public class ProductRepository {
         return productDao.getAll();
     }
 
+    // 追加: 在庫のある商品をListで同期的に取得する
+    public List<Product> getAllProductsList() {
+        return productDao.getAllList();
+    }
+
     public LiveData<List<Product>> getAllProductsWithZeroQuantity() {
         return productDao.getAllWithZeroQuantity();
     }
@@ -45,5 +50,9 @@ public class ProductRepository {
 
     public Product findByBarcode(long barcodeNumber) {
         return productDao.findByBarcode(barcodeNumber);
+    }
+
+    public void deleteAll() {
+        productDao.deleteAll();
     }
 }

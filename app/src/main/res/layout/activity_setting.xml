@@ -5,11 +5,12 @@
     android:background="@color/intellij_background"
     android:layout_height="match_parent">
 
-    <TextView
+    <Button
+        android:id="@+id/button_run_analysis_test"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Setting Activity"
-        android:layout_gravity="center" />
+        android:layout_gravity="center"
+        android:text="分析テスト実行" />
 
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottom_app_bar"

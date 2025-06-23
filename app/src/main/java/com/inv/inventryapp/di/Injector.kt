@@ -1,9 +1,11 @@
 package com.inv.inventryapp.di
 
 import android.content.Context
+import com.inv.inventryapp.repository.AnalysisRepository
 import com.inv.inventryapp.repository.HistoryRepository
 import com.inv.inventryapp.repository.ProductRepository
 import com.inv.inventryapp.repository.ShoppingListRepository
+import com.inv.inventryapp.usecase.ConsumptionAnalysisUseCase
 import com.inv.inventryapp.usecase.HistoryUseCase
 import com.inv.inventryapp.viewmodel.HistoryViewModelFactory
 import com.inv.inventryapp.viewmodel.ProductEditViewModelFactory
@@ -11,27 +13,47 @@ import com.inv.inventryapp.viewmodel.ShoppingListViewModelFactory
 
 object Injector {
 
-    private fun provideProductRepository(context: Context): ProductRepository {
+    // --- Repositories ---
+    // private を削除して public (または internal) に変更
+    fun provideProductRepository(context: Context): ProductRepository {
         return ProductRepository(context.applicationContext)
     }
 
-    private fun provideHistoryRepository(context: Context): HistoryRepository {
+    fun provideHistoryRepository(context: Context): HistoryRepository {
         return HistoryRepository(context.applicationContext)
     }
 
-    private fun provideShoppingListRepository(context: Context): ShoppingListRepository {
+    fun provideShoppingListRepository(context: Context): ShoppingListRepository {
         return ShoppingListRepository(context.applicationContext)
     }
 
-    private fun provideHistoryUseCase(context: Context): HistoryUseCase {
+    fun provideAnalysisRepository(context: Context): AnalysisRepository {
+        return AnalysisRepository(context.applicationContext)
+    }
+
+    // --- UseCases ---
+    // private を削除
+    fun provideHistoryUseCase(context: Context): HistoryUseCase {
         val historyRepository = provideHistoryRepository(context)
         return HistoryUseCase(historyRepository)
     }
 
+    fun provideConsumptionAnalysisUseCase(context: Context): ConsumptionAnalysisUseCase {
+        return ConsumptionAnalysisUseCase(
+            provideProductRepository(context),
+            provideHistoryRepository(context),
+            provideAnalysisRepository(context),
+            provideShoppingListRepository(context)
+        )
+    }
+
+    // --- ViewModelFactories ---
     fun provideProductEditViewModelFactory(context: Context): ProductEditViewModelFactory {
         val productRepository = provideProductRepository(context)
         val historyUseCase = provideHistoryUseCase(context)
-        return ProductEditViewModelFactory(productRepository, historyUseCase)
+        val shoppingListRepository = provideShoppingListRepository(context)
+        val analysisRepository = provideAnalysisRepository(context)
+        return ProductEditViewModelFactory(productRepository, historyUseCase, shoppingListRepository, analysisRepository)
     }
 
     fun provideHistoryViewModelFactory(context: Context): HistoryViewModelFactory {
