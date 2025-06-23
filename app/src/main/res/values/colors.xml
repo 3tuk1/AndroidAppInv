@@ -12,10 +12,16 @@
     <color name="intellij_text_primary">#A9B7C6</color>
     <color name="intellij_text_hint">#808080</color>
     <color name="intellij_button_text">#FFFFFF</color>
+
     <color name="pie_color_1">#82B1FF</color>
     <color name="pie_color_2">#B2FF59</color>
     <color name="pie_color_3">#FFD180</color>
     <color name="pie_color_4">#FF8A80</color>
     <color name="pie_color_5">#EA80FC</color>
     <color name="pie_color_6">#FFFF8D</color>
+
+    <color name="pie_color_purchase">#4A90E2</color>
+    <color name="pie_color_consumption">#F5A623</color>
+    <color name="pie_color_disposal">#D0021B</color>
+    <color name="pie_color_other">#777777</color>
 </resources>

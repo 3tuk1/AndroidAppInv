@@ -17,32 +17,51 @@ class PieChartView @JvmOverloads constructor(
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val rectF = RectF()
     private var data: List<Float> = emptyList()
+
+    // ▼▼▼ 新しい配色を読み込むように変更 ▼▼▼
     private var colors: List<Int> = listOf(
-        context.getColor(R.color.pie_color_1),
-        context.getColor(R.color.pie_color_2),
-        context.getColor(R.color.pie_color_3),
-        context.getColor(R.color.pie_color_4),
-        context.getColor(R.color.pie_color_5),
-        context.getColor(R.color.pie_color_6)
+        context.getColor(R.color.pie_color_purchase),
+        context.getColor(R.color.pie_color_consumption),
+        context.getColor(R.color.pie_color_disposal),
+        context.getColor(R.color.pie_color_other)
     )
+
     private val holePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.intellij_background)
     }
-    private var holeRadiusRatio = 0.5f // 中央の穴の半径の割合
+    private var holeRadiusRatio = 0.6f // 中央の穴を少し大きく
+
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.intellij_text_primary)
         textAlign = Paint.Align.CENTER
-        textSize = 48f
+        textSize = 60f // メインテキストを大きく
+        isFakeBoldText = true
+    }
+    private val subTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = context.getColor(R.color.intellij_text_hint)
+        textAlign = Paint.Align.CENTER
+        textSize = 40f
     }
     private val valueTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         textAlign = Paint.Align.CENTER
-        textSize = 40f
+        textSize = 36f
     }
 
-    fun setData(data: List<Float>) {
+    private var centerText: String = "0円"
+    private var centerSubText: String = "今月の合計"
+    private val textBounds = Rect()
+
+    fun setData(data: List<Float>, dataColors: List<Int>? = null) {
         this.data = data
-        invalidate() // データをセットしたら再描画
+        dataColors?.let { this.colors = it }
+        invalidate()
+    }
+
+    fun setCenterText(mainText: String, subText: String) {
+        this.centerText = mainText
+        this.centerSubText = subText
+        invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -57,7 +76,7 @@ class PieChartView @JvmOverloads constructor(
         }
 
         val total = data.sum()
-        val radius = Math.min(width, height) / 2f
+        val radius = Math.min(width, height) / 2f * 0.9f // 少しパディング
 
         rectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
 
@@ -71,21 +90,17 @@ class PieChartView @JvmOverloads constructor(
                 paint.color = colors[index % colors.size]
                 canvas.drawArc(rectF, startAngle, sweepAngle, true, paint)
 
-                // Draw value text
-                val textAngle = Math.toRadians((startAngle + sweepAngle / 2).toDouble())
-                val textRadius = radius * (holeRadiusRatio + (1 - holeRadiusRatio) / 2)
-                val textX = centerX + (textRadius * Math.cos(textAngle)).toFloat()
-                val textY = centerY + (textRadius * Math.sin(textAngle)).toFloat()
-                val text = value.toInt().toString()
-                val bounds = Rect()
-                valueTextPaint.getTextBounds(text, 0, text.length, bounds)
-                canvas.drawText(text, textX, textY + bounds.height() / 2, valueTextPaint)
-
                 startAngle += sweepAngle
             }
         }
 
         // 中央の穴を描画
         canvas.drawCircle(centerX, centerY, radius * holeRadiusRatio, holePaint)
+
+        // 中央のテキストを描画
+        textPaint.getTextBounds(centerText, 0, centerText.length, textBounds)
+        canvas.drawText(centerText, centerX, centerY - textBounds.height() / 2 + 20, textPaint)
+        subTextPaint.getTextBounds(centerSubText, 0, centerSubText.length, textBounds)
+        canvas.drawText(centerSubText, centerX, centerY + textBounds.height() + 30, subTextPaint)
     }
 }

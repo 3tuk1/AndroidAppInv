@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.switchMap
+import com.inv.inventryapp.model.dto.PieChartSummary
 import com.inv.inventryapp.repository.HistoryRepository
 import com.inv.inventryapp.repository.ProductRepository
 import com.inv.inventryapp.usecase.PieChartDataUseCase
@@ -19,7 +20,8 @@ class PieChartViewModel(application: Application) : AndroidViewModel(application
 
     private val _currentMonth = MutableLiveData<String>()
 
-    val pieData: LiveData<List<Float>> = _currentMonth.switchMap { month ->
+    // LiveDataの型を PieChartSummary に変更
+    val pieChartSummary: LiveData<PieChartSummary> = _currentMonth.switchMap { month ->
         pieChartDataUseCase.execute(month)
     }
 
